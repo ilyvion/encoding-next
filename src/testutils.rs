@@ -4,8 +4,8 @@
 
 //! Macros and utilities for testing.
 
+use crate::types::{RawDecoder, RawEncoder};
 use std::borrow::ToOwned;
-use types::{RawDecoder, RawEncoder};
 
 pub struct TestResult<'a, Output: 'a + ?Sized + ToOwned> {
     pub expected_return: (usize, Option<isize>),
@@ -18,22 +18,38 @@ pub trait Testable {
     type Input: ?Sized;
     type Output: ?Sized + ToOwned;
 
-    fn process_feed_ok<'a>(&mut self, processed: &Self::Input, unprocessed: &Self::Input,
-                           output: &'a Self::Output) -> TestResult<'a, Self::Output>;
-    fn process_feed_err<'a>(&mut self, backup: isize,
-                            processed: &Self::Input, problem: &Self::Input, remaining: &Self::Input,
-                            output: &'a Self::Output) -> TestResult<'a, Self::Output>;
+    fn process_feed_ok<'a>(
+        &mut self,
+        processed: &Self::Input,
+        unprocessed: &Self::Input,
+        output: &'a Self::Output,
+    ) -> TestResult<'a, Self::Output>;
+    fn process_feed_err<'a>(
+        &mut self,
+        backup: isize,
+        processed: &Self::Input,
+        problem: &Self::Input,
+        remaining: &Self::Input,
+        output: &'a Self::Output,
+    ) -> TestResult<'a, Self::Output>;
     fn process_finish_ok<'a>(&mut self, output: &'a Self::Output) -> TestResult<'a, Self::Output>;
-    fn process_finish_err<'a>(&mut self, backup: isize,
-                              output: &'a Self::Output) -> TestResult<'a, Self::Output>;
+    fn process_finish_err<'a>(
+        &mut self,
+        backup: isize,
+        output: &'a Self::Output,
+    ) -> TestResult<'a, Self::Output>;
 }
 
-impl Testable for RawDecoder {
+impl Testable for dyn RawDecoder {
     type Input = [u8];
     type Output = str;
 
-    fn process_feed_ok<'a>(&mut self, processed: &[u8], unprocessed: &[u8],
-                           output: &'a str) -> TestResult<'a, str> {
+    fn process_feed_ok<'a>(
+        &mut self,
+        processed: &[u8],
+        unprocessed: &[u8],
+        output: &'a str,
+    ) -> TestResult<'a, str> {
         let mut input = Vec::with_capacity(processed.len() + unprocessed.len());
         input.extend(processed.iter().cloned());
         input.extend(unprocessed.iter().cloned());
@@ -48,8 +64,14 @@ impl Testable for RawDecoder {
         }
     }
 
-    fn process_feed_err<'a>(&mut self, backup: isize, processed: &[u8], problem: &[u8],
-                            remaining: &[u8], output: &'a str) -> TestResult<'a, str> {
+    fn process_feed_err<'a>(
+        &mut self,
+        backup: isize,
+        processed: &[u8],
+        problem: &[u8],
+        remaining: &[u8],
+        output: &'a str,
+    ) -> TestResult<'a, str> {
         let mut input = Vec::with_capacity(processed.len() + problem.len() + remaining.len());
         input.extend(processed.iter().cloned());
         input.extend(problem.iter().cloned());
@@ -58,8 +80,10 @@ impl Testable for RawDecoder {
         let mut buf = String::new();
         let (nprocessed, err) = self.raw_feed(&input[-backup as usize..], &mut buf);
         TestResult {
-            expected_return: (processed.len(), Some(processed.len() as isize +
-                                                    problem.len() as isize + backup)),
+            expected_return: (
+                processed.len(),
+                Some(processed.len() as isize + problem.len() as isize + backup),
+            ),
             expected_push: output,
             actual_return: (nprocessed, err.map(|e| e.upto)),
             actual_push: buf,
@@ -89,12 +113,16 @@ impl Testable for RawDecoder {
     }
 }
 
-impl Testable for RawEncoder {
+impl Testable for dyn RawEncoder {
     type Input = str;
     type Output = [u8];
 
-    fn process_feed_ok<'a>(&mut self, processed: &str, unprocessed: &str,
-                           output: &'a [u8]) -> TestResult<'a, [u8]> {
+    fn process_feed_ok<'a>(
+        &mut self,
+        processed: &str,
+        unprocessed: &str,
+        output: &'a [u8],
+    ) -> TestResult<'a, [u8]> {
         let mut input = String::with_capacity(processed.len() + unprocessed.len());
         input.push_str(processed);
         input.push_str(unprocessed);
@@ -109,8 +137,14 @@ impl Testable for RawEncoder {
         }
     }
 
-    fn process_feed_err<'a>(&mut self, backup: isize, processed: &str, problem: &str,
-                            remaining: &str, output: &'a [u8]) -> TestResult<'a, [u8]> {
+    fn process_feed_err<'a>(
+        &mut self,
+        backup: isize,
+        processed: &str,
+        problem: &str,
+        remaining: &str,
+        output: &'a [u8],
+    ) -> TestResult<'a, [u8]> {
         let mut input = String::with_capacity(processed.len() + problem.len() + remaining.len());
         input.push_str(processed);
         input.push_str(problem);
@@ -119,8 +153,10 @@ impl Testable for RawEncoder {
         let mut buf = Vec::new();
         let (nprocessed, err) = self.raw_feed(&input[-backup as usize..], &mut buf);
         TestResult {
-            expected_return: (processed.len(), Some(processed.len() as isize +
-                                                    problem.len() as isize + backup)),
+            expected_return: (
+                processed.len(),
+                Some(processed.len() as isize + problem.len() as isize + backup),
+            ),
             expected_push: output,
             actual_return: (nprocessed, err.map(|e| e.upto)),
             actual_push: buf,
@@ -151,54 +187,72 @@ impl Testable for RawEncoder {
 }
 
 macro_rules! assert_expected {
-    ($result:expr, $func:expr, $filter:expr) => ({
-        use testutils::Testable;
+    ($result:expr, $func:expr, $filter:expr) => {{
+        use crate::testutils::Testable;
         match $result {
             result => {
-                assert!(result.expected_return == result.actual_return,
-                        "{} should return {:?}, but instead returned {:?}",
-                        $func, $filter(result.expected_return), $filter(result.actual_return));
-                assert!(&result.expected_push[..] == &result.actual_push[..],
-                        "{} should push {:?}, but instead pushed {:?}",
-                        $func, result.expected_push, result.actual_push);
+                assert!(
+                    result.expected_return == result.actual_return,
+                    "{} should return {:?}, but instead returned {:?}",
+                    $func,
+                    $filter(result.expected_return),
+                    $filter(result.actual_return)
+                );
+                assert!(
+                    &result.expected_push[..] == &result.actual_push[..],
+                    "{} should push {:?}, but instead pushed {:?}",
+                    $func,
+                    result.expected_push,
+                    result.actual_push
+                );
             }
         }
-    });
+    }};
 }
 
 macro_rules! assert_feed_ok {
-    ($this:expr, $processed:expr, $unprocessed:expr, $output:expr) => (
-        assert_expected!($this.process_feed_ok(&$processed, &$unprocessed, &$output),
-                         "raw_feed", |r| r)
-    );
+    ($this:expr, $processed:expr, $unprocessed:expr, $output:expr) => {
+        assert_expected!(
+            $this.process_feed_ok(&$processed, &$unprocessed, &$output),
+            "raw_feed",
+            |r| r
+        )
+    };
 }
 
 macro_rules! assert_feed_err {
-    ($this:expr, $backup:expr, $processed:expr, $problem:expr, $remaining:expr, $output:expr) => (
-        assert_expected!($this.process_feed_err($backup, &$processed, &$problem, &$remaining,
-                                                &$output),
-                         "raw_feed", |r| r)
-    );
-    ($this:expr, $processed:expr, $problem:expr, $remaining:expr, $output:expr) => (
+    ($this:expr, $backup:expr, $processed:expr, $problem:expr, $remaining:expr, $output:expr) => {
+        assert_expected!(
+            $this.process_feed_err($backup, &$processed, &$problem, &$remaining, &$output),
+            "raw_feed",
+            |r| r
+        )
+    };
+    ($this:expr, $processed:expr, $problem:expr, $remaining:expr, $output:expr) => {
         assert_feed_err!($this, 0, $processed, $problem, $remaining, $output)
-    );
+    };
 }
 
 macro_rules! assert_finish_ok {
-    ($this:expr, $output:expr) => (
-        assert_expected!($this.process_finish_ok(&$output),
-                         "raw_finish", |r: (usize, Option<isize>)| r.0)
-    );
+    ($this:expr, $output:expr) => {
+        assert_expected!($this.process_finish_ok(&$output), "raw_finish", |r: (
+            usize,
+            Option<isize>
+        )| r.0)
+    };
 }
 
 macro_rules! assert_finish_err {
-    ($this:expr, $backup:expr, $output:expr) => (
-        assert_expected!($this.process_finish_err($backup, &$output),
-                         "raw_finish", |r: (usize, Option<isize>)| r.0)
-    );
-    ($this:expr, $output:expr) => (
+    ($this:expr, $backup:expr, $output:expr) => {
+        assert_expected!(
+            $this.process_finish_err($backup, &$output),
+            "raw_finish",
+            |r: (usize, Option<isize>)| r.0
+        )
+    };
+    ($this:expr, $output:expr) => {
         assert_finish_err!($this, 0, $output)
-    );
+    };
 }
 
 /// Some ASCII-only text to test.
@@ -285,8 +339,8 @@ pub static INVALID_UTF8_TEXT: &'static [u8] = include_bytes!("examples/UTF-8-tes
 /// or it will use a built-in sample data (of about 100KB).
 pub fn get_external_bench_data() -> Vec<u8> {
     use std::env;
-    use std::io::Read;
     use std::fs::File;
+    use std::io::Read;
     use std::path::Path;
 
     // An HTML file derived from the Outer Space Treaty of 1967, in six available languages.
@@ -296,14 +350,15 @@ pub fn get_external_bench_data() -> Vec<u8> {
     match env::var("EXTERNAL_BENCH_DATA") {
         Ok(path) => {
             let path = Path::new(&path);
-            let mut file = File::open(&path).ok().expect("cannot read an external bench data");
+            let mut file = File::open(&path)
+                .ok()
+                .expect("cannot read an external bench data");
             let mut ret = Vec::new();
-            file.read_to_end(&mut ret).ok().expect("cannot read an external bench data");
+            file.read_to_end(&mut ret)
+                .ok()
+                .expect("cannot read an external bench data");
             ret
         }
-        Err(..) => {
-            LONGER_TEXT.to_vec()
-        }
+        Err(..) => LONGER_TEXT.to_vec(),
     }
 }
-

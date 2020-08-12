@@ -4,17 +4,23 @@
 
 //! A placeholder encoding that returns encoder/decoder error for every case.
 
+use crate::types::*;
 use std::convert::Into;
-use types::*;
 
 /// An encoding that returns encoder/decoder error for every case.
 #[derive(Clone, Copy)]
 pub struct ErrorEncoding;
 
 impl Encoding for ErrorEncoding {
-    fn name(&self) -> &'static str { "error" }
-    fn raw_encoder(&self) -> Box<RawEncoder> { ErrorEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { ErrorDecoder::new() }
+    fn name(&self) -> &'static str {
+        "error"
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        ErrorEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        ErrorDecoder::new()
+    }
 }
 
 /// An encoder that always returns error.
@@ -22,22 +28,35 @@ impl Encoding for ErrorEncoding {
 pub struct ErrorEncoder;
 
 impl ErrorEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(ErrorEncoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(ErrorEncoder)
+    }
 }
 
 impl RawEncoder for ErrorEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { ErrorEncoder::new() }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        ErrorEncoder::new()
+    }
 
-    fn raw_feed(&mut self, input: &str, _output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        _output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         if let Some(ch) = input.chars().next() {
-            (0, Some(CodecError { upto: ch.len_utf8() as isize,
-                                  cause: "unrepresentable character".into() }))
+            (
+                0,
+                Some(CodecError {
+                    upto: ch.len_utf8() as isize,
+                    cause: "unrepresentable character".into(),
+                }),
+            )
         } else {
             (0, None)
         }
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -47,22 +66,35 @@ impl RawEncoder for ErrorEncoder {
 pub struct ErrorDecoder;
 
 impl ErrorDecoder {
-    pub fn new() -> Box<RawDecoder> { Box::new(ErrorDecoder) }
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(ErrorDecoder)
+    }
 }
 
 impl RawDecoder for ErrorDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { ErrorDecoder::new() }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        ErrorDecoder::new()
+    }
 
-    fn raw_feed(&mut self,
-                input: &[u8], _output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        _output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         if input.len() > 0 {
-            (0, Some(CodecError { upto: 1, cause: "invalid sequence".into() }))
+            (
+                0,
+                Some(CodecError {
+                    upto: 1,
+                    cause: "invalid sequence".into(),
+                }),
+            )
         } else {
             (0, None)
         }
     }
 
-    fn raw_finish(&mut self, _output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn StringWriter) -> Option<CodecError> {
         None
     }
 }
@@ -70,7 +102,7 @@ impl RawDecoder for ErrorDecoder {
 #[cfg(test)]
 mod tests {
     use super::ErrorEncoding;
-    use types::*;
+    use crate::types::*;
 
     #[test]
     fn test_encoder() {

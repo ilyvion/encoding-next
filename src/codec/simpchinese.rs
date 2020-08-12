@@ -4,11 +4,11 @@
 
 //! Legacy simplified Chinese encodings based on GB 2312 and GB 18030.
 
+use crate::index_simpchinese as index;
+use crate::types::*;
+use crate::util::StrCharIndex;
 use std::convert::Into;
 use std::default::Default;
-use util::StrCharIndex;
-use index_simpchinese as index;
-use types::*;
 
 /// GB 18030.
 ///
@@ -38,10 +38,18 @@ use types::*;
 pub struct GB18030Encoding;
 
 impl Encoding for GB18030Encoding {
-    fn name(&self) -> &'static str { "gb18030" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("gb18030") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { GB18030Encoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { GB18030Decoder::new() }
+    fn name(&self) -> &'static str {
+        "gb18030"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("gb18030")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        GB18030Encoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        GB18030Decoder::new()
+    }
 }
 
 /// An encoder for GB 18030.
@@ -49,16 +57,28 @@ impl Encoding for GB18030Encoding {
 pub struct GB18030Encoder;
 
 impl GB18030Encoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(GB18030Encoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(GB18030Encoder)
+    }
 }
 
 impl RawEncoder for GB18030Encoder {
-    fn from_self(&self) -> Box<RawEncoder> { GB18030Encoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        GB18030Encoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         GBEncoder.raw_feed(input, output, false)
     }
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> { None }
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
+        None
+    }
 }
 
 /// GBK, as a subset of GB 18030.
@@ -82,10 +102,18 @@ impl RawEncoder for GB18030Encoder {
 pub struct GBKEncoding;
 
 impl Encoding for GBKEncoding {
-    fn name(&self) -> &'static str { "gbk" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("gbk") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { GBKEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { GB18030Decoder::new() }
+    fn name(&self) -> &'static str {
+        "gbk"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("gbk")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        GBKEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        GB18030Decoder::new()
+    }
 }
 
 /// An encoder for GBK.
@@ -93,16 +121,28 @@ impl Encoding for GBKEncoding {
 pub struct GBKEncoder;
 
 impl GBKEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(GBKEncoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(GBKEncoder)
+    }
 }
 
 impl RawEncoder for GBKEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { GBKEncoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        GBKEncoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         GBEncoder.raw_feed(input, output, true)
     }
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> { None }
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
+        None
+    }
 }
 
 /// A shared encoder logic for GBK and GB 18030.
@@ -110,28 +150,38 @@ impl RawEncoder for GBKEncoder {
 struct GBEncoder;
 
 impl GBEncoder {
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter,
-                gbk_flag: bool) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+        gbk_flag: bool,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
         for ((i, j), ch) in input.index_iter() {
             if ch < '\u{80}' {
                 output.write_byte(ch as u8);
             } else if ch == '\u{e5e5}' {
-                return (i, Some(CodecError {
-                    upto: j as isize,
-                    cause: "no legacy private-use character supported".into()
-                }));
+                return (
+                    i,
+                    Some(CodecError {
+                        upto: j as isize,
+                        cause: "no legacy private-use character supported".into(),
+                    }),
+                );
             } else if gbk_flag && ch == '\u{20AC}' {
                 output.write_byte('\u{80}' as u8)
             } else {
                 let ptr = index::gb18030::backward(ch as u32);
                 if ptr == 0xffff {
                     if gbk_flag {
-                        return (i, Some(CodecError {
-                            upto: j as isize,
-                            cause: "gbk doesn't support gb18030 extensions".into()
-                        }));
+                        return (
+                            i,
+                            Some(CodecError {
+                                upto: j as isize,
+                                cause: "gbk doesn't support gb18030 extensions".into(),
+                            }),
+                        );
                     }
                     let ptr = index::gb18030_ranges::backward(ch as u32);
                     assert!(ptr != 0xffffffff);
@@ -145,7 +195,7 @@ impl GBEncoder {
                 } else {
                     let lead = ptr / 190 + 0x81;
                     let trail = ptr % 190;
-                    let trailoffset = if trail < 0x3f {0x40} else {0x41};
+                    let trailoffset = if trail < 0x3f { 0x40 } else { 0x41 };
                     output.write_byte(lead as u8);
                     output.write_byte((trail + trailoffset) as u8);
                 }
@@ -162,22 +212,32 @@ struct GB18030Decoder {
 }
 
 impl GB18030Decoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(GB18030Decoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(GB18030Decoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for GB18030Decoder {
-    fn from_self(&self) -> Box<RawDecoder> { GB18030Decoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        GB18030Decoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = gb18030::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = gb18030::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -188,12 +248,12 @@ stateful_decoder! {
     module gb18030;
 
     internal pub fn map_two_bytes(lead: u8, trail: u8) -> u32 {
-        use index_simpchinese as index;
+        use crate::index_simpchinese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0x81...0xfe, 0x40...0x7e) | (0x81...0xfe, 0x80...0xfe) => {
+            (0x81..=0xfe, 0x40..=0x7e) | (0x81..=0xfe, 0x80..=0xfe) => {
                 let trailoffset = if trail < 0x7f {0x40} else {0x41};
                 (lead - 0x81) * 190 + trail - trailoffset
             }
@@ -203,7 +263,7 @@ stateful_decoder! {
     }
 
     internal pub fn map_four_bytes(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
-        use index_simpchinese as index;
+        use crate::index_simpchinese as index;
 
         // no range check here, caller should have done all checks
         let index = (b1 as u32 - 0x81) * 12600 + (b2 as u32 - 0x30) * 1260 +
@@ -214,16 +274,16 @@ stateful_decoder! {
 initial:
     // gb18030 first = 0x00, gb18030 second = 0x00, gb18030 third = 0x00
     state S0(ctx: Context) {
-        case b @ 0x00...0x7f => ctx.emit(b as u32);
+        case b @ 0x00..=0x7f => ctx.emit(b as u32);
         case 0x80 => ctx.emit(0x20ac);
-        case b @ 0x81...0xfe => S1(ctx, b);
+        case b @ 0x81..=0xfe => S1(ctx, b);
         case _ => ctx.err("invalid sequence");
     }
 
 transient:
     // gb18030 first != 0x00, gb18030 second = 0x00, gb18030 third = 0x00
     state S1(ctx: Context, first: u8) {
-        case b @ 0x30...0x39 => S2(ctx, first, b);
+        case b @ 0x30..=0x39 => S2(ctx, first, b);
         case b => match map_two_bytes(first, b) {
             0xffff => ctx.backup_and_err(1, "invalid sequence"), // unconditional
             ch => ctx.emit(ch)
@@ -232,13 +292,13 @@ transient:
 
     // gb18030 first != 0x00, gb18030 second != 0x00, gb18030 third = 0x00
     state S2(ctx: Context, first: u8, second: u8) {
-        case b @ 0x81...0xfe => S3(ctx, first, second, b);
+        case b @ 0x81..=0xfe => S3(ctx, first, second, b);
         case _ => ctx.backup_and_err(2, "invalid sequence");
     }
 
     // gb18030 first != 0x00, gb18030 second != 0x00, gb18030 third != 0x00
     state S3(ctx: Context, first: u8, second: u8, third: u8) {
-        case b @ 0x30...0x39 => match map_four_bytes(first, second, third, b) {
+        case b @ 0x30..=0x39 => match map_four_bytes(first, second, third, b) {
             0xffffffff => ctx.backup_and_err(3, "invalid sequence"), // unconditional
             ch => ctx.emit(ch)
         };
@@ -250,8 +310,8 @@ transient:
 mod gb18030_tests {
     extern crate test;
     use super::GB18030Encoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -259,18 +319,31 @@ mod gb18030_tests {
         assert_feed_ok!(e, "A", "", [0x41]);
         assert_feed_ok!(e, "BC", "", [0x42, 0x43]);
         assert_feed_ok!(e, "", "", []);
-        assert_feed_ok!(e, "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}", "",
-                        [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1,
-                         0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa]);
+        assert_feed_ok!(
+            e,
+            "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}",
+            "",
+            [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1, 0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa]
+        );
         assert_feed_ok!(e, "1\u{20ac}/m", "", [0x31, 0xa2, 0xe3, 0x2f, 0x6d]);
-        assert_feed_ok!(e, "\u{ff21}\u{ff22}\u{ff23}", "", [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3]);
+        assert_feed_ok!(
+            e,
+            "\u{ff21}\u{ff22}\u{ff23}",
+            "",
+            [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3]
+        );
         assert_feed_ok!(e, "\u{80}", "", [0x81, 0x30, 0x81, 0x30]);
         assert_feed_ok!(e, "\u{81}", "", [0x81, 0x30, 0x81, 0x31]);
         assert_feed_ok!(e, "\u{a3}", "", [0x81, 0x30, 0x84, 0x35]);
         assert_feed_ok!(e, "\u{a4}", "", [0xa1, 0xe8]);
         assert_feed_ok!(e, "\u{a5}", "", [0x81, 0x30, 0x84, 0x36]);
         assert_feed_ok!(e, "\u{10ffff}", "", [0xe3, 0x32, 0x9a, 0x35]);
-        assert_feed_ok!(e, "\u{2a6a5}\u{3007}", "", [0x98, 0x35, 0xee, 0x37, 0xa9, 0x96]);
+        assert_feed_ok!(
+            e,
+            "\u{2a6a5}\u{3007}",
+            "",
+            [0x98, 0x35, 0xee, 0x37, 0xa9, 0x96]
+        );
         assert_finish_ok!(e, []);
     }
 
@@ -288,18 +361,31 @@ mod gb18030_tests {
         assert_feed_ok!(d, [0x41], [], "A");
         assert_feed_ok!(d, [0x42, 0x43], [], "BC");
         assert_feed_ok!(d, [], [], "");
-        assert_feed_ok!(d, [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1,
-                            0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa], [],
-                        "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}");
+        assert_feed_ok!(
+            d,
+            [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1, 0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa],
+            [],
+            "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}"
+        );
         assert_feed_ok!(d, [0x31, 0x80, 0x2f, 0x6d], [], "1\u{20ac}/m");
-        assert_feed_ok!(d, [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3], [], "\u{ff21}\u{ff22}\u{ff23}");
+        assert_feed_ok!(
+            d,
+            [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3],
+            [],
+            "\u{ff21}\u{ff22}\u{ff23}"
+        );
         assert_feed_ok!(d, [0x81, 0x30, 0x81, 0x30], [], "\u{80}");
         assert_feed_ok!(d, [0x81, 0x30, 0x81, 0x31], [], "\u{81}");
         assert_feed_ok!(d, [0x81, 0x30, 0x84, 0x35], [], "\u{a3}");
-        assert_feed_ok!(d, [0xa1, 0xe8], [], "\u{a4}" );
+        assert_feed_ok!(d, [0xa1, 0xe8], [], "\u{a4}");
         assert_feed_ok!(d, [0x81, 0x30, 0x84, 0x36], [], "\u{a5}");
         assert_feed_ok!(d, [0xe3, 0x32, 0x9a, 0x35], [], "\u{10ffff}");
-        assert_feed_ok!(d, [0x98, 0x35, 0xee, 0x37, 0xa9, 0x96], [], "\u{2a6a5}\u{3007}");
+        assert_feed_ok!(
+            d,
+            [0x98, 0x35, 0xee, 0x37, 0xa9, 0x96],
+            [],
+            "\u{2a6a5}\u{3007}"
+        );
         assert_feed_ok!(d, [0xa3, 0xa0], [], "\u{3000}");
         assert_finish_ok!(d, "");
     }
@@ -407,19 +493,17 @@ mod gb18030_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            GB18030Encoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(GB18030Encoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = GB18030Encoding.encode(testutils::SIMPLIFIED_CHINESE_TEXT,
-                                       EncoderTrap::Strict).ok().unwrap();
+        let s = GB18030Encoding
+            .encode(testutils::SIMPLIFIED_CHINESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            GB18030Encoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(GB18030Encoding.decode(&s, DecoderTrap::Strict)))
     }
 }
 
@@ -427,8 +511,8 @@ mod gb18030_tests {
 mod gbk_tests {
     extern crate test;
     use super::GBKEncoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     // GBK and GB 18030 share the same decoder logic.
 
@@ -438,11 +522,19 @@ mod gbk_tests {
         assert_feed_ok!(e, "A", "", [0x41]);
         assert_feed_ok!(e, "BC", "", [0x42, 0x43]);
         assert_feed_ok!(e, "", "", []);
-        assert_feed_ok!(e, "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}", "",
-                        [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1,
-                         0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa]);
+        assert_feed_ok!(
+            e,
+            "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}",
+            "",
+            [0xd6, 0xd0, 0xbb, 0xaa, 0xc8, 0xcb, 0xc3, 0xf1, 0xb9, 0xb2, 0xba, 0xcd, 0xb9, 0xfa]
+        );
         assert_feed_ok!(e, "1\u{20ac}/m", "", [0x31, 0x80, 0x2f, 0x6d]);
-        assert_feed_ok!(e, "\u{ff21}\u{ff22}\u{ff23}", "", [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3]);
+        assert_feed_ok!(
+            e,
+            "\u{ff21}\u{ff22}\u{ff23}",
+            "",
+            [0xa3, 0xc1, 0xa3, 0xc2, 0xa3, 0xc3]
+        );
         assert_feed_err!(e, "", "\u{80}", "", []);
         assert_feed_err!(e, "", "\u{81}", "", []);
         assert_feed_err!(e, "", "\u{a3}", "", []);
@@ -458,9 +550,7 @@ mod gbk_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            GBKEncoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(GBKEncoding.encode(&s, EncoderTrap::Strict)))
     }
 }
 
@@ -477,10 +567,18 @@ mod gbk_tests {
 pub struct HZEncoding;
 
 impl Encoding for HZEncoding {
-    fn name(&self) -> &'static str { "hz" }
-    fn whatwg_name(&self) -> Option<&'static str> { None }
-    fn raw_encoder(&self) -> Box<RawEncoder> { HZEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { HZDecoder::new() }
+    fn name(&self) -> &'static str {
+        "hz"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        None
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        HZEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        HZDecoder::new()
+    }
 }
 
 /// An encoder for HZ.
@@ -490,14 +588,24 @@ pub struct HZEncoder {
 }
 
 impl HZEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(HZEncoder { escaped: false }) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(HZEncoder { escaped: false })
+    }
 }
 
 impl RawEncoder for HZEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { HZEncoder::new() }
-    fn is_ascii_compatible(&self) -> bool { false }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        HZEncoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        false
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
         let mut escaped = self.escaped;
@@ -508,26 +616,37 @@ impl RawEncoder for HZEncoder {
             () => (if escaped { output.write_bytes(b"~}"); escaped = false; })
         );
 
-        for ((i,j), ch) in input.index_iter() {
+        for ((i, j), ch) in input.index_iter() {
             if ch < '\u{80}' {
                 ensure_unescaped!();
                 output.write_byte(ch as u8);
-                if ch == '~' { output.write_byte('~' as u8); }
+                if ch == '~' {
+                    output.write_byte('~' as u8);
+                }
             } else {
                 let ptr = index::gb18030::backward(ch as u32);
                 if ptr == 0xffff {
                     self.escaped = escaped; // do NOT reset the state!
-                    return (i, Some(CodecError {
-                        upto: j as isize, cause: "unrepresentable character".into()
-                    }));
+                    return (
+                        i,
+                        Some(CodecError {
+                            upto: j as isize,
+                            cause: "unrepresentable character".into(),
+                        }),
+                    );
                 } else {
                     let lead = ptr / 190;
                     let trail = ptr % 190;
-                    if lead < 0x21 - 1 || trail < 0x21 + 0x3f { // GBK extension, ignored
+                    if lead < 0x21 - 1 || trail < 0x21 + 0x3f {
+                        // GBK extension, ignored
                         self.escaped = escaped; // do NOT reset the state!
-                        return (i, Some(CodecError {
-                            upto: j as isize, cause: "unrepresentable character".into()
-                        }));
+                        return (
+                            i,
+                            Some(CodecError {
+                                upto: j as isize,
+                                cause: "unrepresentable character".into(),
+                            }),
+                        );
                     } else {
                         ensure_escaped!();
                         output.write_byte((lead + 1) as u8);
@@ -541,7 +660,7 @@ impl RawEncoder for HZEncoder {
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -553,22 +672,32 @@ struct HZDecoder {
 }
 
 impl HZDecoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(HZDecoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(HZDecoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for HZDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { HZDecoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        HZDecoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = hz::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = hz::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -579,12 +708,12 @@ stateful_decoder! {
     module hz;
 
     internal pub fn map_two_bytes(lead: u8, trail: u8) -> u32 {
-        use index_simpchinese as index;
+        use crate::index_simpchinese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0x20...0x7f, 0x21...0x7e) => (lead - 1) * 190 + (trail + 0x3f),
+            (0x20..=0x7f, 0x21..=0x7e) => (lead - 1) * 190 + (trail + 0x3f),
             _ => 0xffff,
         };
         index::gb18030::forward(index)
@@ -594,7 +723,7 @@ initial:
     // hz-gb-2312 flag = unset, hz-gb-2312 lead = 0x00
     state A0(ctx: Context) {
         case 0x7e => A1(ctx);
-        case b @ 0x00...0x7f => ctx.emit(b as u32);
+        case b @ 0x00..=0x7f => ctx.emit(b as u32);
         case _ => ctx.err("invalid sequence");
         final => ctx.reset();
     }
@@ -603,7 +732,7 @@ checkpoint:
     // hz-gb-2312 flag = set, hz-gb-2312 lead = 0x00
     state B0(ctx: Context) {
         case 0x7e => B1(ctx);
-        case b @ 0x20...0x7f => B2(ctx, b);
+        case b @ 0x20..=0x7f => B2(ctx, b);
         case 0x0a => ctx.err("invalid sequence"); // error *and* reset
         case _ => ctx.err("invalid sequence"), B0(ctx);
         final => ctx.reset();
@@ -647,8 +776,8 @@ transient:
 mod hz_tests {
     extern crate test;
     use super::HZEncoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -656,8 +785,12 @@ mod hz_tests {
         assert_feed_ok!(e, "A", "", *b"A");
         assert_feed_ok!(e, "BC", "", *b"BC");
         assert_feed_ok!(e, "", "", *b"");
-        assert_feed_ok!(e, "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}", "",
-                        *b"~{VP;*HKCq92:M9z");
+        assert_feed_ok!(
+            e,
+            "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}",
+            "",
+            *b"~{VP;*HKCq92:M9z"
+        );
         assert_feed_ok!(e, "\u{ff21}\u{ff22}\u{ff23}", "", *b"#A#B#C");
         assert_feed_ok!(e, "1\u{20ac}/m", "", *b"~}1~{\"c~}/m");
         assert_feed_ok!(e, "~<\u{a4}~\u{0a4}>~", "", *b"~~<~{!h~}~~~{!h~}>~~");
@@ -683,8 +816,12 @@ mod hz_tests {
         assert_feed_ok!(d, *b"~F~\nG", *b"~", "~FG");
         assert_feed_ok!(d, *b"", *b"", "");
         assert_feed_ok!(d, *b"\nH", *b"~", "H");
-        assert_feed_ok!(d, *b"{VP~}~{;*~{HKCq92:M9z", *b"",
-                        "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}");
+        assert_feed_ok!(
+            d,
+            *b"{VP~}~{;*~{HKCq92:M9z",
+            *b"",
+            "\u{4e2d}\u{534e}\u{4eba}\u{6c11}\u{5171}\u{548c}\u{56fd}"
+        );
         assert_feed_ok!(d, *b"", *b"#", "");
         assert_feed_ok!(d, *b"A", *b"~", "\u{ff21}");
         assert_feed_ok!(d, *b"~#B~~#C", *b"~", "~\u{ff22}~\u{ff23}");
@@ -764,19 +901,16 @@ mod hz_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            HZEncoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(HZEncoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = HZEncoding.encode(testutils::SIMPLIFIED_CHINESE_TEXT,
-                                  EncoderTrap::Strict).ok().unwrap();
+        let s = HZEncoding
+            .encode(testutils::SIMPLIFIED_CHINESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            HZEncoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(HZEncoding.decode(&s, DecoderTrap::Strict)))
     }
 }
-

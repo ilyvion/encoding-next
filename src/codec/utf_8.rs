@@ -24,9 +24,9 @@
 
 //! UTF-8, the universal encoding.
 
-use std::{str, mem};
+use crate::types::*;
 use std::convert::Into;
-use types::*;
+use std::{mem, str};
 
 /**
  * UTF-8 (UCS Transformation Format, 8-bit).
@@ -47,10 +47,18 @@ use types::*;
 pub struct UTF8Encoding;
 
 impl Encoding for UTF8Encoding {
-    fn name(&self) -> &'static str { "utf-8" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("utf-8") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { UTF8Encoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { UTF8Decoder::new() }
+    fn name(&self) -> &'static str {
+        "utf-8"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("utf-8")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        UTF8Encoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        UTF8Decoder::new()
+    }
 }
 
 /// An encoder for UTF-8.
@@ -58,21 +66,31 @@ impl Encoding for UTF8Encoding {
 pub struct UTF8Encoder;
 
 impl UTF8Encoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(UTF8Encoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(UTF8Encoder)
+    }
 }
 
 impl RawEncoder for UTF8Encoder {
-    fn from_self(&self) -> Box<RawEncoder> { UTF8Encoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        UTF8Encoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         let input: &[u8] = input.as_bytes();
         assert!(str::from_utf8(input).is_ok());
         output.write_bytes(input);
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -86,8 +104,12 @@ pub struct UTF8Decoder {
 }
 
 impl UTF8Decoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(UTF8Decoder { queuelen: 0, queue: [0; 4], state: INITIAL_STATE })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(UTF8Decoder {
+            queuelen: 0,
+            queue: [0; 4],
+            state: INITIAL_STATE,
+        })
     }
 }
 
@@ -104,28 +126,28 @@ static CHAR_CATEGORY: [u8; 256] = [
     //  9 (90-9F): continuation byte
     // 10 (E0): start of three byte sequence, next byte restricted to non-overlong (A0-BF)
     // 11 (F0): start of four byte sequence, next byte restricted to non-overlong (90-BF)
-
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-    10,3,3,3,3,3,3,3,3,3,3,3,3,4,3,3, 11,6,6,6,5,8,8,8,8,8,8,8,8,8,8,8,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    10, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 11, 6, 6, 6, 5, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8,
 ];
 
 static STATE_TRANSITIONS: [u8; 110] = [
-     0,98,12,24,48,84,72,98,98,98,36,60,       //  0: '??
-    86, 0,86,86,86,86,86, 0,86, 0,86,86,       // 12: .. 'cc
-    86,12,86,86,86,86,86,12,86,12,86,86,       // 24: .. 'cc cc
-    86,86,86,86,86,86,86,12,86,86,86,86,       // 36: .. 'cc(A0-BF) cc
-    86,12,86,86,86,86,86,86,86,12,86,86,       // 48: .. 'cc(80-9F) cc
-    86,86,86,86,86,86,86,24,86,24,86,86,       // 60: .. 'cc(90-BF) cc cc
-    86,24,86,86,86,86,86,24,86,24,86,86,       // 72: .. 'cc cc cc
-    86,24,86,86,86,86,86,86,86,86,86,86,86,86, // 84: .. 'cc(80-8F) cc cc
-       // 86,86,86,86,86,86,86,86,86,86,86,86, // 86: .. xx '..
-          98,98,98,98,98,98,98,98,98,98,98,98, // 98: xx '..
+    0, 98, 12, 24, 48, 84, 72, 98, 98, 98, 36, 60, //  0: '??
+    86, 0, 86, 86, 86, 86, 86, 0, 86, 0, 86, 86, // 12: .. 'cc
+    86, 12, 86, 86, 86, 86, 86, 12, 86, 12, 86, 86, // 24: .. 'cc cc
+    86, 86, 86, 86, 86, 86, 86, 12, 86, 86, 86, 86, // 36: .. 'cc(A0-BF) cc
+    86, 12, 86, 86, 86, 86, 86, 86, 86, 12, 86, 86, // 48: .. 'cc(80-9F) cc
+    86, 86, 86, 86, 86, 86, 86, 24, 86, 24, 86, 86, // 60: .. 'cc(90-BF) cc cc
+    86, 24, 86, 86, 86, 86, 86, 24, 86, 24, 86, 86, // 72: .. 'cc cc cc
+    86, 24, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, // 84: .. 'cc(80-8F) cc cc
+    // 86,86,86,86,86,86,86,86,86,86,86,86, // 86: .. xx '..
+    98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, // 98: xx '..
 ];
 
 static INITIAL_STATE: u8 = 0;
@@ -139,14 +161,22 @@ macro_rules! next_state(($state:expr, $ch:expr) => (
 ));
 
 impl RawDecoder for UTF8Decoder {
-    fn from_self(&self) -> Box<RawDecoder> { UTF8Decoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        UTF8Decoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
-        fn write_bytes(output: &mut StringWriter, bytes: &[u8]) {
-            output.write_str(unsafe {mem::transmute(bytes)});
+        fn write_bytes(output: &mut dyn StringWriter, bytes: &[u8]) {
+            output.write_str(unsafe { mem::transmute(bytes) });
         }
 
         let mut state = self.state;
@@ -155,7 +185,10 @@ impl RawDecoder for UTF8Decoder {
 
         // optimization: if we are in the initial state, quickly skip to the first non-MSB-set byte.
         if state == INITIAL_STATE {
-            let first_msb = input.iter().position(|&ch| ch >= 0x80).unwrap_or(input.len());
+            let first_msb = input
+                .iter()
+                .position(|&ch| ch >= 0x80)
+                .unwrap_or(input.len());
             offset += first_msb;
             processed += first_msb;
         }
@@ -165,21 +198,31 @@ impl RawDecoder for UTF8Decoder {
             if state == ACCEPT_STATE {
                 processed = i + offset + 1;
             } else if is_reject_state!(state) {
-                let upto = if state == REJECT_STATE {i + offset + 1} else {i + offset};
+                let upto = if state == REJECT_STATE {
+                    i + offset + 1
+                } else {
+                    i + offset
+                };
                 self.state = INITIAL_STATE;
-                if processed > 0 && self.queuelen > 0 { // flush `queue` outside the problem
+                if processed > 0 && self.queuelen > 0 {
+                    // flush `queue` outside the problem
                     write_bytes(output, &self.queue[0..self.queuelen]);
                 }
                 self.queuelen = 0;
                 write_bytes(output, &input[0..processed]);
-                return (processed, Some(CodecError {
-                    upto: upto as isize, cause: "invalid sequence".into()
-                }));
+                return (
+                    processed,
+                    Some(CodecError {
+                        upto: upto as isize,
+                        cause: "invalid sequence".into(),
+                    }),
+                );
             }
         }
 
         self.state = state;
-        if processed > 0 && self.queuelen > 0 { // flush `queue`
+        if processed > 0 && self.queuelen > 0 {
+            // flush `queue`
             write_bytes(output, &self.queue[0..self.queuelen]);
             self.queuelen = 0;
         }
@@ -194,13 +237,16 @@ impl RawDecoder for UTF8Decoder {
         (processed, None)
     }
 
-    fn raw_finish(&mut self, _output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn StringWriter) -> Option<CodecError> {
         let state = self.state;
         let queuelen = self.queuelen;
         self.state = INITIAL_STATE;
         self.queuelen = 0;
         if state != ACCEPT_STATE {
-            Some(CodecError { upto: 0, cause: "incomplete sequence".into() })
+            Some(CodecError {
+                upto: 0,
+                cause: "incomplete sequence".into(),
+            })
         } else {
             assert!(queuelen == 0);
             None
@@ -225,15 +271,21 @@ pub fn from_utf8<'a>(input: &'a [u8]) -> Option<&'a str> {
                 state = next_state!(INITIAL_STATE, ch);
                 break;
             }
-            None => { return_as_whole!(); }
+            None => {
+                return_as_whole!();
+            }
         }
     }
 
     for &ch in iter {
         state = next_state!(state, ch);
-        if is_reject_state!(state) { return None; }
+        if is_reject_state!(state) {
+            return None;
+        }
     }
-    if state != ACCEPT_STATE { return None; }
+    if state != ACCEPT_STATE {
+        return None;
+    }
     return_as_whole!();
 }
 
@@ -242,10 +294,10 @@ mod tests {
     // portions of these tests are adopted from Markus Kuhn's UTF-8 decoder capability and
     // stress test: <http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt>.
 
-    use super::{UTF8Encoding, from_utf8};
+    use super::{from_utf8, UTF8Encoding};
+    use crate::testutils;
+    use crate::types::*;
     use std::str;
-    use testutils;
-    use types::*;
 
     #[test]
     fn test_valid() {
@@ -262,17 +314,33 @@ mod tests {
         assert_feed_ok!(d, [0xc2, 0xa2], [], "\u{a2}");
         assert_feed_ok!(d, [0xc2, 0xac, 0xc2, 0xa9], [], "\u{ac}\u{0a9}");
         assert_feed_ok!(d, [], [], "");
-        assert_feed_ok!(d, [0xd5, 0xa1, 0xd5, 0xb5, 0xd5, 0xa2, 0xd5, 0xb8, 0xd6, 0x82,
-                            0xd5, 0xa2, 0xd5, 0xa5, 0xd5, 0xb6], [],
-                        "\u{561}\u{0575}\u{562}\u{578}\u{582}\u{562}\u{565}\u{576}");
+        assert_feed_ok!(
+            d,
+            [
+                0xd5, 0xa1, 0xd5, 0xb5, 0xd5, 0xa2, 0xd5, 0xb8, 0xd6, 0x82, 0xd5, 0xa2, 0xd5, 0xa5,
+                0xd5, 0xb6
+            ],
+            [],
+            "\u{561}\u{0575}\u{562}\u{578}\u{582}\u{562}\u{565}\u{576}"
+        );
         assert_finish_ok!(d, "");
 
         // three bytes
         let mut d = UTF8Encoding.raw_decoder();
         assert_feed_ok!(d, [0xed, 0x92, 0x89], [], "\u{d489}");
-        assert_feed_ok!(d, [0xe6, 0xbc, 0xa2, 0xe5, 0xad, 0x97], [], "\u{6f22}\u{5b57}");
+        assert_feed_ok!(
+            d,
+            [0xe6, 0xbc, 0xa2, 0xe5, 0xad, 0x97],
+            [],
+            "\u{6f22}\u{5b57}"
+        );
         assert_feed_ok!(d, [], [], "");
-        assert_feed_ok!(d, [0xc9, 0x99, 0xc9, 0x94, 0xc9, 0x90], [], "\u{259}\u{0254}\u{250}");
+        assert_feed_ok!(
+            d,
+            [0xc9, 0x99, 0xc9, 0x94, 0xc9, 0x90],
+            [],
+            "\u{259}\u{0254}\u{250}"
+        );
         assert_finish_ok!(d, "");
 
         // four bytes
@@ -453,7 +521,7 @@ mod tests {
     #[test]
     fn test_invalid_incomplete_three_byte_seq_followed_by_space() {
         for b in 0xe0..0xf5 {
-            let c = if b == 0xe0 || b == 0xf0 {0xa0} else {0x80};
+            let c = if b == 0xe0 || b == 0xf0 { 0xa0 } else { 0x80 };
 
             let mut d = UTF8Encoding.raw_decoder();
             assert_feed_err!(d, [], [b, c], [0x20], "");
@@ -480,7 +548,7 @@ mod tests {
     #[test]
     fn test_invalid_incomplete_four_byte_seq_followed_by_space() {
         for a in 0xf0..0xf5 {
-            let b = if a == 0xf0 {0xa0} else {0x80};
+            let b = if a == 0xf0 { 0xa0 } else { 0x80 };
             let c = 0x80;
 
             let mut d = UTF8Encoding.raw_decoder();
@@ -630,54 +698,44 @@ mod tests {
 
     mod bench_ascii {
         extern crate test;
-        use super::super::{UTF8Encoding, from_utf8};
+        use super::super::{from_utf8, UTF8Encoding};
+        use crate::testutils;
+        use crate::types::*;
         use std::str;
-        use testutils;
-        use types::*;
 
         #[bench]
         fn bench_encode(bencher: &mut test::Bencher) {
             let s = testutils::ASCII_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.encode(s, EncoderTrap::Strict)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.encode(s, EncoderTrap::Strict)))
         }
 
         #[bench]
         fn bench_decode(bencher: &mut test::Bencher) {
             let s = testutils::ASCII_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.decode(s, DecoderTrap::Strict)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.decode(s, DecoderTrap::Strict)))
         }
 
         #[bench]
         fn bench_from_utf8(bencher: &mut test::Bencher) {
             let s = testutils::ASCII_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8(bencher: &mut test::Bencher) {
             let s = testutils::ASCII_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                str::from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(str::from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_lossy(bencher: &mut test::Bencher) {
             let s = testutils::ASCII_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                String::from_utf8_lossy(s)
-            }))
+            bencher.iter(|| test::black_box(String::from_utf8_lossy(s)))
         }
     }
 
@@ -685,144 +743,118 @@ mod tests {
     // unlike other CJK scripts, so it reflects a practical use case a bit better.
     mod bench_korean {
         extern crate test;
-        use super::super::{UTF8Encoding, from_utf8};
+        use super::super::{from_utf8, UTF8Encoding};
+        use crate::testutils;
+        use crate::types::*;
         use std::str;
-        use testutils;
-        use types::*;
 
         #[bench]
         fn bench_encode(bencher: &mut test::Bencher) {
             let s = testutils::KOREAN_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.encode(s, EncoderTrap::Strict)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.encode(s, EncoderTrap::Strict)))
         }
 
         #[bench]
         fn bench_decode(bencher: &mut test::Bencher) {
             let s = testutils::KOREAN_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.decode(s, DecoderTrap::Strict)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.decode(s, DecoderTrap::Strict)))
         }
 
         #[bench]
         fn bench_from_utf8(bencher: &mut test::Bencher) {
             let s = testutils::KOREAN_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8(bencher: &mut test::Bencher) {
             let s = testutils::KOREAN_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                str::from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(str::from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_lossy(bencher: &mut test::Bencher) {
             let s = testutils::KOREAN_TEXT.as_bytes();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                String::from_utf8_lossy(s)
-            }))
+            bencher.iter(|| test::black_box(String::from_utf8_lossy(s)))
         }
     }
 
     mod bench_lossy_invalid {
         extern crate test;
-        use super::super::{UTF8Encoding, from_utf8};
+        use super::super::{from_utf8, UTF8Encoding};
+        use crate::testutils;
+        use crate::types::DecoderTrap::Replace as DecodeReplace;
+        use crate::types::*;
         use std::str;
-        use testutils;
-        use types::*;
-        use types::DecoderTrap::Replace as DecodeReplace;
 
         #[bench]
         fn bench_decode_replace(bencher: &mut test::Bencher) {
             let s = testutils::INVALID_UTF8_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.decode(s, DecodeReplace)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.decode(s, DecodeReplace)))
         }
 
         #[bench] // for the comparison
         fn bench_from_utf8_failing(bencher: &mut test::Bencher) {
             let s = testutils::INVALID_UTF8_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_failing(bencher: &mut test::Bencher) {
             let s = testutils::INVALID_UTF8_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                str::from_utf8(s)
-            }))
+            bencher.iter(|| test::black_box(str::from_utf8(s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_lossy(bencher: &mut test::Bencher) {
             let s = testutils::INVALID_UTF8_TEXT;
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                String::from_utf8_lossy(s)
-            }))
+            bencher.iter(|| test::black_box(String::from_utf8_lossy(s)))
         }
     }
 
     mod bench_lossy_external {
         extern crate test;
-        use super::super::{UTF8Encoding, from_utf8};
+        use super::super::{from_utf8, UTF8Encoding};
+        use crate::testutils;
+        use crate::types::DecoderTrap::Replace as DecodeReplace;
+        use crate::types::*;
         use std::str;
-        use testutils;
-        use types::*;
-        use types::DecoderTrap::Replace as DecodeReplace;
 
         #[bench]
         fn bench_decode_replace(bencher: &mut test::Bencher) {
             let s = testutils::get_external_bench_data();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                UTF8Encoding.decode(&s, DecodeReplace)
-            }))
+            bencher.iter(|| test::black_box(UTF8Encoding.decode(&s, DecodeReplace)))
         }
 
         #[bench] // for the comparison
         fn bench_from_utf8_failing(bencher: &mut test::Bencher) {
             let s = testutils::get_external_bench_data();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                from_utf8(&s)
-            }))
+            bencher.iter(|| test::black_box(from_utf8(&s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_failing(bencher: &mut test::Bencher) {
             let s = testutils::get_external_bench_data();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                str::from_utf8(&s)
-            }))
+            bencher.iter(|| test::black_box(str::from_utf8(&s)))
         }
 
         #[bench] // for the comparison
         fn bench_stdlib_from_utf8_lossy(bencher: &mut test::Bencher) {
             let s = testutils::get_external_bench_data();
             bencher.bytes = s.len() as u64;
-            bencher.iter(|| test::black_box({
-                String::from_utf8_lossy(&s)
-            }))
+            bencher.iter(|| test::black_box(String::from_utf8_lossy(&s)))
         }
     }
 }

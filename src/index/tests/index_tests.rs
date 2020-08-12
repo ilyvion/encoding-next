@@ -7,21 +7,25 @@
 /// Makes a common test suite for single-byte indices.
 #[macro_export]
 macro_rules! single_byte_tests {
-    () => (
+    () => {
         mod tests {
             extern crate test;
-            use super::{forward, backward};
+            use super::{backward, forward};
 
             #[test]
             fn test_correct_table() {
                 for i in 0x80..0x100 {
                     let i = i as u8;
                     let j = forward(i);
-                    if j != 0xffff { assert_eq!(backward(j as u32), i); }
+                    if j != 0xffff {
+                        assert_eq!(backward(j as u32), i);
+                    }
                 }
                 for i in 0..0x110000 {
                     let j = backward(i);
-                    if j != 0 { assert_eq!(forward(j) as u32, i); }
+                    if j != 0 {
+                        assert_eq!(forward(j) as u32, i);
+                    }
                 }
             }
 
@@ -52,12 +56,14 @@ macro_rules! single_byte_tests {
                 bencher.iter(|| {
                     for i in 0x80..0x100 {
                         let j = forward(i as u8);
-                        if j != 0 { test::black_box(backward(j as u32)); }
+                        if j != 0 {
+                            test::black_box(backward(j as u32));
+                        }
                     }
                 })
             }
         }
-    );
+    };
 }
 
 /// Makes a common test suite for multi-byte indices.
@@ -165,10 +171,10 @@ macro_rules! multi_byte_range_tests {
     (
         key = [$minkey:expr, $maxkey:expr], key < $keyubound:expr,
         value = [$minvalue:expr, $maxvalue:expr], value < $valueubound:expr
-    ) => (
+    ) => {
         mod tests {
             extern crate test;
-            use super::{forward, backward};
+            use super::{backward, forward};
 
             static MIN_KEY: u32 = $minkey;
             static MAX_KEY: u32 = $maxkey;
@@ -180,23 +186,33 @@ macro_rules! multi_byte_range_tests {
             #[test]
             #[allow(unused_comparisons)]
             fn test_no_failure() {
-                for i in MIN_KEY.saturating_sub(1)..(MAX_KEY+2) {
+                for i in MIN_KEY.saturating_sub(1)..(MAX_KEY + 2) {
                     forward(i);
                 }
-                for j in MIN_VALUE.saturating_sub(1)..(MAX_VALUE+2) {
+                for j in MIN_VALUE.saturating_sub(1)..(MAX_VALUE + 2) {
                     backward(j);
                 }
             }
 
             #[test]
             fn test_correct_table() {
-                for i in MIN_KEY..(MAX_KEY+2) {
+                for i in MIN_KEY..(MAX_KEY + 2) {
                     let j = forward(i);
-                    if j == 0xffffffff { continue; }
+                    if j == 0xffffffff {
+                        continue;
+                    }
                     let i_ = backward(j);
-                    if i_ == 0xffffffff { continue; }
-                    assert!(i_ == i,
-                            "backward(forward({})) = backward({}) = {} != {}", i, j, i_, i);
+                    if i_ == 0xffffffff {
+                        continue;
+                    }
+                    assert!(
+                        i_ == i,
+                        "backward(forward({})) = backward({}) = {} != {}",
+                        i,
+                        j,
+                        i_,
+                        i
+                    );
                 }
             }
 
@@ -208,7 +224,9 @@ macro_rules! multi_byte_range_tests {
                         test::black_box(forward(i));
                     }
                     start += 0x80;
-                    if start >= KEY_UBOUND { start = 0; }
+                    if start >= KEY_UBOUND {
+                        start = 0;
+                    }
                 })
             }
 
@@ -220,10 +238,11 @@ macro_rules! multi_byte_range_tests {
                         test::black_box(backward(i));
                     }
                     start += 0x80;
-                    if start >= VALUE_UBOUND { start = 0; }
+                    if start >= VALUE_UBOUND {
+                        start = 0;
+                    }
                 })
             }
         }
-    );
+    };
 }
-

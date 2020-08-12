@@ -4,11 +4,11 @@
 
 //! Legacy traditional Chinese encodings.
 
+use crate::index_tradchinese as index;
+use crate::types::*;
+use crate::util::StrCharIndex;
 use std::convert::Into;
 use std::default::Default;
-use util::StrCharIndex;
-use index_tradchinese as index;
-use types::*;
 
 /**
  * Big5-2003 with common extensions. (XXX with asymmetric HKSCS-2008 support)
@@ -28,10 +28,18 @@ use types::*;
 pub struct BigFive2003Encoding;
 
 impl Encoding for BigFive2003Encoding {
-    fn name(&self) -> &'static str { "big5-2003" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("big5") } // WHATWG compatibility
-    fn raw_encoder(&self) -> Box<RawEncoder> { BigFive2003Encoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { BigFive2003HKSCS2008Decoder::new() }
+    fn name(&self) -> &'static str {
+        "big5-2003"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("big5")
+    } // WHATWG compatibility
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        BigFive2003Encoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        BigFive2003HKSCS2008Decoder::new()
+    }
 }
 
 /// An encoder for Big5-2003.
@@ -39,29 +47,43 @@ impl Encoding for BigFive2003Encoding {
 pub struct BigFive2003Encoder;
 
 impl BigFive2003Encoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(BigFive2003Encoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(BigFive2003Encoder)
+    }
 }
 
 impl RawEncoder for BigFive2003Encoder {
-    fn from_self(&self) -> Box<RawEncoder> { BigFive2003Encoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        BigFive2003Encoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
-        for ((i,j), ch) in input.index_iter() {
+        for ((i, j), ch) in input.index_iter() {
             if ch < '\u{80}' {
                 output.write_byte(ch as u8);
             } else {
                 let ptr = index::big5::backward(ch as u32);
                 if ptr == 0xffff {
-                    return (i, Some(CodecError {
-                        upto: j as isize, cause: "unrepresentable character".into()
-                    }));
+                    return (
+                        i,
+                        Some(CodecError {
+                            upto: j as isize,
+                            cause: "unrepresentable character".into(),
+                        }),
+                    );
                 }
                 let lead = ptr / 157 + 0x81;
                 let trail = ptr % 157;
-                let trailoffset = if trail < 0x3f {0x40} else {0x62};
+                let trailoffset = if trail < 0x3f { 0x40 } else { 0x62 };
                 output.write_byte(lead as u8);
                 output.write_byte((trail + trailoffset) as u8);
             }
@@ -69,7 +91,7 @@ impl RawEncoder for BigFive2003Encoder {
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -81,22 +103,32 @@ struct BigFive2003HKSCS2008Decoder {
 }
 
 impl BigFive2003HKSCS2008Decoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(BigFive2003HKSCS2008Decoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(BigFive2003HKSCS2008Decoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for BigFive2003HKSCS2008Decoder {
-    fn from_self(&self) -> Box<RawDecoder> { BigFive2003HKSCS2008Decoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        BigFive2003HKSCS2008Decoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = bigfive2003::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = bigfive2003::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -107,12 +139,12 @@ stateful_decoder! {
     module bigfive2003;
 
     internal pub fn map_two_bytes(lead: u8, trail: u8) -> u32 {
-        use index_tradchinese as index;
+        use crate::index_tradchinese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0x81...0xfe, 0x40...0x7e) | (0x81...0xfe, 0xa1...0xfe) => {
+            (0x81..=0xfe, 0x40..=0x7e) | (0x81..=0xfe, 0xa1..=0xfe) => {
                 let trailoffset = if trail < 0x7f {0x40} else {0x62};
                 (lead - 0x81) * 157 + trail - trailoffset
             }
@@ -124,8 +156,8 @@ stateful_decoder! {
 initial:
     // big5 lead = 0x00
     state S0(ctx: Context) {
-        case b @ 0x00...0x7f => ctx.emit(b as u32);
-        case b @ 0x81...0xfe => S1(ctx, b);
+        case b @ 0x00..=0x7f => ctx.emit(b as u32);
+        case b @ 0x81..=0xfe => S1(ctx, b);
         case _ => ctx.err("invalid sequence");
     }
 
@@ -150,8 +182,8 @@ transient:
 mod bigfive2003_tests {
     extern crate test;
     use super::BigFive2003Encoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -159,8 +191,12 @@ mod bigfive2003_tests {
         assert_feed_ok!(e, "A", "", [0x41]);
         assert_feed_ok!(e, "BC", "", [0x42, 0x43]);
         assert_feed_ok!(e, "", "", []);
-        assert_feed_ok!(e, "\u{4e2d}\u{83ef}\u{6c11}\u{570b}", "",
-                        [0xa4, 0xa4, 0xb5, 0xd8, 0xa5, 0xc1, 0xb0, 0xea]);
+        assert_feed_ok!(
+            e,
+            "\u{4e2d}\u{83ef}\u{6c11}\u{570b}",
+            "",
+            [0xa4, 0xa4, 0xb5, 0xd8, 0xa5, 0xc1, 0xb0, 0xea]
+        );
         assert_feed_ok!(e, "1\u{20ac}/m", "", [0x31, 0xa3, 0xe1, 0x2f, 0x6d]);
         assert_feed_ok!(e, "\u{ffed}", "", [0xf9, 0xfe]);
         assert_feed_ok!(e, "\u{2550}", "", [0xf9, 0xf9]); // not [0xa2, 0xa4]
@@ -182,8 +218,12 @@ mod bigfive2003_tests {
         assert_feed_ok!(d, [0x41], [], "A");
         assert_feed_ok!(d, [0x42, 0x43], [], "BC");
         assert_feed_ok!(d, [], [], "");
-        assert_feed_ok!(d, [0xa4, 0xa4, 0xb5, 0xd8, 0xa5, 0xc1, 0xb0, 0xea], [],
-                        "\u{4e2d}\u{83ef}\u{6c11}\u{570b}");
+        assert_feed_ok!(
+            d,
+            [0xa4, 0xa4, 0xb5, 0xd8, 0xa5, 0xc1, 0xb0, 0xea],
+            [],
+            "\u{4e2d}\u{83ef}\u{6c11}\u{570b}"
+        );
         assert_feed_ok!(d, [], [0xa4], "");
         assert_feed_ok!(d, [0xa4, 0xb5, 0xd8], [0xa5], "\u{4e2d}\u{83ef}");
         assert_feed_ok!(d, [0xc1, 0xb0, 0xea], [], "\u{6c11}\u{570b}");
@@ -192,8 +232,12 @@ mod bigfive2003_tests {
         assert_feed_ok!(d, [0xf9, 0xf9], [], "\u{2550}");
         assert_feed_ok!(d, [0xa2, 0xa4], [], "\u{2550}");
         assert_feed_ok!(d, [0x87, 0x7e], [], "\u{3eec}"); // HKSCS-2008 addition
-        assert_feed_ok!(d, [0x88, 0x62, 0x88, 0x64, 0x88, 0xa3, 0x88, 0xa5], [],
-                        "\u{ca}\u{304}\u{00ca}\u{30c}\u{ea}\u{304}\u{ea}\u{30c}"); // 2-byte output
+        assert_feed_ok!(
+            d,
+            [0x88, 0x62, 0x88, 0x64, 0x88, 0xa3, 0x88, 0xa5],
+            [],
+            "\u{ca}\u{304}\u{00ca}\u{30c}\u{ea}\u{304}\u{ea}\u{30c}"
+        ); // 2-byte output
         assert_finish_ok!(d, "");
     }
 
@@ -262,18 +306,16 @@ mod bigfive2003_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::TRADITIONAL_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            BigFive2003Encoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(BigFive2003Encoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = BigFive2003Encoding.encode(testutils::TRADITIONAL_CHINESE_TEXT,
-                                           EncoderTrap::Strict).ok().unwrap();
+        let s = BigFive2003Encoding
+            .encode(testutils::TRADITIONAL_CHINESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            BigFive2003Encoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(BigFive2003Encoding.decode(&s, DecoderTrap::Strict)))
     }
 }

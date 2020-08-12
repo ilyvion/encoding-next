@@ -117,7 +117,7 @@
 //! use encoding::all::ASCII;
 //!
 //! // hexadecimal numeric character reference replacement
-//! fn hex_ncr_escape(_encoder: &mut RawEncoder, input: &str, output: &mut ByteWriter) -> bool {
+//! fn hex_ncr_escape(_encoder: &mut dyn RawEncoder, input: &str, output: &mut dyn ByteWriter) -> bool {
 //!     let escapes: Vec<String> =
 //!         input.chars().map(|ch| format!("&#x{:x};", ch as isize)).collect();
 //!     let escapes = escapes.concat();
@@ -174,7 +174,7 @@
 //!
 //! **`RawEncoder`** is an experimental incremental encoder.
 //! At each step of `raw_feed`, it receives a slice of string
-//! and emits any encoded bytes to a generic `ByteWriter` (normally `Vec<u8>`).
+//! and emits any encoded bytes to a generic `dyn ByteWriter` (normally `Vec<u8>`).
 //! It will stop at the first error if any, and would return a `CodecError` struct in that case.
 //! The caller is responsible for calling `raw_finish` at the end of encoding process.
 //!
@@ -225,37 +225,41 @@
 
 #![cfg_attr(test, feature(test))] // lib stability features as per RFC #507
 
-extern crate encoding_types;
-extern crate encoding_index_singlebyte as index_singlebyte;
-extern crate encoding_index_korean as index_korean;
 extern crate encoding_index_japanese as index_japanese;
+extern crate encoding_index_korean as index_korean;
 extern crate encoding_index_simpchinese as index_simpchinese;
+extern crate encoding_index_singlebyte as index_singlebyte;
 extern crate encoding_index_tradchinese as index_tradchinese;
+extern crate encoding_types;
 
-#[cfg(test)] extern crate test;
+#[cfg(test)]
+extern crate test;
 
-pub use self::types::{CodecError, ByteWriter, StringWriter,
-                      RawEncoder, RawDecoder, EncodingRef, Encoding,
-                      EncoderTrapFunc, DecoderTrapFunc, DecoderTrap,
-                      EncoderTrap}; // reexport
+pub use self::types::{
+    ByteWriter, CodecError, DecoderTrap, DecoderTrapFunc, EncoderTrap, EncoderTrapFunc, Encoding,
+    EncodingRef, RawDecoder, RawEncoder, StringWriter,
+}; // reexport
 use std::borrow::Cow;
 
-#[macro_use] mod util;
-#[cfg(test)] #[macro_use] mod testutils;
+#[macro_use]
+mod util;
+#[cfg(test)]
+#[macro_use]
+mod testutils;
 
 pub mod types;
 
 /// Codec implementations.
 pub mod codec {
-    pub mod error;
     pub mod ascii;
-    pub mod singlebyte;
-    pub mod utf_8;
-    pub mod utf_16;
-    pub mod korean;
+    pub mod error;
     pub mod japanese;
+    pub mod korean;
     pub mod simpchinese;
+    pub mod singlebyte;
     pub mod tradchinese;
+    pub mod utf_16;
+    pub mod utf_8;
     pub mod whatwg;
 }
 
@@ -265,9 +269,12 @@ pub mod label;
 /// Determine the encoding by looking for a Byte Order Mark (BOM)
 /// and decoded a single string in memory.
 /// Return the result and the used encoding.
-pub fn decode(input: &[u8], trap: DecoderTrap, fallback_encoding: EncodingRef)
-           -> (Result<String, Cow<'static, str>>, EncodingRef) {
-    use all::{UTF_8, UTF_16LE, UTF_16BE};
+pub fn decode(
+    input: &[u8],
+    trap: DecoderTrap,
+    fallback_encoding: EncodingRef,
+) -> (Result<String, Cow<'static, str>>, EncodingRef) {
+    use crate::all::{UTF_16BE, UTF_16LE, UTF_8};
     if input.starts_with(&[0xEF, 0xBB, 0xBF]) {
         (UTF_8.decode(&input[3..], trap), UTF_8 as EncodingRef)
     } else if input.starts_with(&[0xFE, 0xFF]) {
@@ -286,8 +293,8 @@ mod tests {
     #[test]
     fn test_decode() {
         fn test_one(input: &[u8], expected_result: &str, expected_encoding: &str) {
-            let (result, used_encoding) = decode(
-                input, DecoderTrap::Strict, all::ISO_8859_1 as EncodingRef);
+            let (result, used_encoding) =
+                decode(input, DecoderTrap::Strict, all::ISO_8859_1 as EncodingRef);
             let result = result.unwrap();
             assert_eq!(used_encoding.name(), expected_encoding);
             assert_eq!(&result[..], expected_result);

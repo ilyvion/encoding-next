@@ -4,9 +4,9 @@
 
 //! UTF-16.
 
+use crate::types::*;
+use crate::util::as_char;
 use std::convert::Into;
-use util::as_char;
-use types::*;
 
 /// UTF-16 (UCS Transformation Format, 16-bit), in little endian.
 ///
@@ -20,10 +20,18 @@ use types::*;
 pub struct UTF16LEEncoding;
 
 impl Encoding for UTF16LEEncoding {
-    fn name(&self) -> &'static str { "utf-16le" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("utf-16le") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { UTF16LEEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { UTF16LEDecoder::new() }
+    fn name(&self) -> &'static str {
+        "utf-16le"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("utf-16le")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        UTF16LEEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        UTF16LEDecoder::new()
+    }
 }
 
 /// UTF-16 (UCS Transformation Format, 16-bit), in big endian.
@@ -38,10 +46,18 @@ impl Encoding for UTF16LEEncoding {
 pub struct UTF16BEEncoding;
 
 impl Encoding for UTF16BEEncoding {
-    fn name(&self) -> &'static str { "utf-16be" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("utf-16be") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { UTF16BEEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { UTF16BEDecoder::new() }
+    fn name(&self) -> &'static str {
+        "utf-16be"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("utf-16be")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        UTF16BEEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        UTF16BEDecoder::new()
+    }
 }
 
 /// A shared encoder logic for UTF-16.
@@ -49,25 +65,28 @@ impl Encoding for UTF16BEEncoding {
 struct UTF16Encoder;
 
 impl UTF16Encoder {
-    fn raw_feed<F>(&mut self, input: &str, output: &mut ByteWriter,
-                   write_two_bytes: F) -> (usize, Option<CodecError>)
-            where F: Fn(&mut ByteWriter, u8, u8) {
+    fn raw_feed<F>(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+        write_two_bytes: F,
+    ) -> (usize, Option<CodecError>)
+    where
+        F: Fn(&mut dyn ByteWriter, u8, u8),
+    {
         output.writer_hint(input.len() * 2);
 
         for ch in input.chars() {
             match ch {
-                '\u{0}'...'\u{d7ff}' | '\u{e000}'...'\u{ffff}' => {
+                '\u{0}'..='\u{d7ff}' | '\u{e000}'..='\u{ffff}' => {
                     let ch = ch as u32;
                     write_two_bytes(output, (ch >> 8) as u8, (ch & 0xff) as u8);
                 }
-                '\u{10000}'...'\u{10ffff}' => {
+                '\u{10000}'..='\u{10ffff}' => {
                     let ch = ch as u32 - 0x10000;
-                    write_two_bytes(output, (0xd8 | (ch >> 18)) as u8,
-                                            ((ch >> 10) & 0xff) as u8);
-                    write_two_bytes(output, (0xdc | ((ch >> 8) & 0x3)) as u8,
-                                            (ch & 0xff) as u8);
+                    write_two_bytes(output, (0xd8 | (ch >> 18)) as u8, ((ch >> 10) & 0xff) as u8);
+                    write_two_bytes(output, (0xdc | ((ch >> 8) & 0x3)) as u8, (ch & 0xff) as u8);
                 }
-                _ => unreachable!() // XXX Rust issue #12483, this is redundant
             }
         }
         (input.len(), None)
@@ -79,18 +98,32 @@ impl UTF16Encoder {
 pub struct UTF16LEEncoder;
 
 impl UTF16LEEncoder {
-    fn new() -> Box<RawEncoder> { Box::new(UTF16LEEncoder) }
+    fn new() -> Box<dyn RawEncoder> {
+        Box::new(UTF16LEEncoder)
+    }
 }
 
 impl RawEncoder for UTF16LEEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { UTF16LEEncoder::new() }
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
-        UTF16Encoder.raw_feed(input, output, |output: &mut ByteWriter, msb: u8, lsb: u8| {
-            output.write_byte(lsb);
-            output.write_byte(msb);
-        })
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        UTF16LEEncoder::new()
     }
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> { None }
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
+        UTF16Encoder.raw_feed(
+            input,
+            output,
+            |output: &mut dyn ByteWriter, msb: u8, lsb: u8| {
+                output.write_byte(lsb);
+                output.write_byte(msb);
+            },
+        )
+    }
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
+        None
+    }
 }
 
 /// An encoder for UTF-16 in big endian.
@@ -98,18 +131,32 @@ impl RawEncoder for UTF16LEEncoder {
 pub struct UTF16BEEncoder;
 
 impl UTF16BEEncoder {
-    fn new() -> Box<RawEncoder> { Box::new(UTF16BEEncoder) }
+    fn new() -> Box<dyn RawEncoder> {
+        Box::new(UTF16BEEncoder)
+    }
 }
 
 impl RawEncoder for UTF16BEEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { UTF16BEEncoder::new() }
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
-        UTF16Encoder.raw_feed(input, output, |output: &mut ByteWriter, msb: u8, lsb: u8| {
-            output.write_byte(msb);
-            output.write_byte(lsb);
-        })
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        UTF16BEEncoder::new()
     }
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> { None }
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
+        UTF16Encoder.raw_feed(
+            input,
+            output,
+            |output: &mut dyn ByteWriter, msb: u8, lsb: u8| {
+                output.write_byte(msb);
+                output.write_byte(lsb);
+            },
+        )
+    }
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
+        None
+    }
 }
 
 /// A shared decoder logic for UTF-16.
@@ -121,49 +168,69 @@ struct UTF16Decoder {
 
 impl UTF16Decoder {
     fn new() -> UTF16Decoder {
-        UTF16Decoder { leadbyte: 0xffff, leadsurrogate: 0xffff }
+        UTF16Decoder {
+            leadbyte: 0xffff,
+            leadsurrogate: 0xffff,
+        }
     }
 
-    fn raw_feed<F>(&mut self, input: &[u8], output: &mut StringWriter,
-                   concat_two_bytes: F) -> (usize, Option<CodecError>)
-            where F: Fn(u16, u8) -> u16 {
+    fn raw_feed<F>(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+        concat_two_bytes: F,
+    ) -> (usize, Option<CodecError>)
+    where
+        F: Fn(u16, u8) -> u16,
+    {
         output.writer_hint(input.len() / 2); // when every codepoint is U+0000..007F
 
         let mut i = 0;
         let mut processed = 0;
         let len = input.len();
 
-        if i >= len { return (processed, None); }
+        if i >= len {
+            return (processed, None);
+        }
 
         if self.leadbyte != 0xffff {
             let ch = concat_two_bytes(self.leadbyte, input[i]);
             i += 1;
             self.leadbyte = 0xffff;
-            if self.leadsurrogate != 0xffff { // `ch` is lower surrogate
+            if self.leadsurrogate != 0xffff {
+                // `ch` is lower surrogate
                 let upper = self.leadsurrogate;
                 self.leadsurrogate = 0xffff;
                 match ch {
-                    0xdc00...0xdfff => {
+                    0xdc00..=0xdfff => {
                         let ch = ((upper as u32 - 0xd800) << 10) + (ch as u32 - 0xdc00);
                         output.write_char(as_char(ch + 0x10000));
                         processed = i;
                     }
                     _ => {
-                        return (processed, Some(CodecError {
-                            upto: i as isize - 2, cause: "invalid sequence".into()
-                        }));
+                        return (
+                            processed,
+                            Some(CodecError {
+                                upto: i as isize - 2,
+                                cause: "invalid sequence".into(),
+                            }),
+                        );
                     }
                 }
             } else {
                 match ch {
-                    0xd800...0xdbff => {
+                    0xd800..=0xdbff => {
                         self.leadsurrogate = ch;
                         // pass through
                     }
-                    0xdc00...0xdfff => {
-                        return (processed, Some(CodecError {
-                            upto: i as isize, cause: "invalid sequence".into()
-                        }));
+                    0xdc00..=0xdfff => {
+                        return (
+                            processed,
+                            Some(CodecError {
+                                upto: i as isize,
+                                cause: "invalid sequence".into(),
+                            }),
+                        );
                     }
                     _ => {
                         output.write_char(as_char(ch as u32));
@@ -171,29 +238,35 @@ impl UTF16Decoder {
                     }
                 }
             }
-            if i >= len { return (processed, None); }
+            if i >= len {
+                return (processed, None);
+            }
         }
 
         if self.leadsurrogate != 0xffff {
             i += 1;
             if i >= len {
-                self.leadbyte = input[i-1] as u16;
+                self.leadbyte = input[i - 1] as u16;
                 return (processed, None);
             }
             let upper = self.leadsurrogate;
-            let ch = concat_two_bytes(input[i-1] as u16, input[i]);
+            let ch = concat_two_bytes(input[i - 1] as u16, input[i]);
             i += 1;
             match ch {
-                0xdc00...0xdfff => {
+                0xdc00..=0xdfff => {
                     let ch = ((upper as u32 - 0xd800) << 10) + (ch as u32 - 0xdc00);
                     output.write_char(as_char(ch + 0x10000));
                 }
                 _ => {
                     self.leadbyte = 0xffff;
                     self.leadsurrogate = 0xffff;
-                    return (processed, Some(CodecError {
-                        upto: i as isize - 2, cause: "invalid sequence".into()
-                    }));
+                    return (
+                        processed,
+                        Some(CodecError {
+                            upto: i as isize - 2,
+                            cause: "invalid sequence".into(),
+                        }),
+                    );
                 }
             }
         }
@@ -204,35 +277,45 @@ impl UTF16Decoder {
         while i < len {
             i += 1;
             if i >= len {
-                self.leadbyte = input[i-1] as u16;
+                self.leadbyte = input[i - 1] as u16;
                 break;
             }
-            let ch = concat_two_bytes(input[i-1] as u16, input[i]);
+            let ch = concat_two_bytes(input[i - 1] as u16, input[i]);
             match ch {
-                0xd800...0xdbff => {
+                0xd800..=0xdbff => {
                     i += 2;
                     if i >= len {
                         self.leadsurrogate = ch;
-                        if i-1 < len { self.leadbyte = input[i-1] as u16; }
+                        if i - 1 < len {
+                            self.leadbyte = input[i - 1] as u16;
+                        }
                         break;
                     }
-                    let ch2 = concat_two_bytes(input[i-1] as u16, input[i]);
+                    let ch2 = concat_two_bytes(input[i - 1] as u16, input[i]);
                     match ch2 {
-                        0xdc00...0xdfff => {
+                        0xdc00..=0xdfff => {
                             let ch = ((ch as u32 - 0xd800) << 10) + (ch2 as u32 - 0xdc00);
                             output.write_char(as_char(ch + 0x10000));
                         }
                         _ => {
-                            return (processed, Some(CodecError {
-                                upto: i as isize - 1, cause: "invalid sequence".into()
-                            }));
+                            return (
+                                processed,
+                                Some(CodecError {
+                                    upto: i as isize - 1,
+                                    cause: "invalid sequence".into(),
+                                }),
+                            );
                         }
                     }
                 }
-                0xdc00...0xdfff => {
-                    return (processed, Some(CodecError {
-                        upto: i as isize + 1, cause: "invalid sequence".into()
-                    }));
+                0xdc00..=0xdfff => {
+                    return (
+                        processed,
+                        Some(CodecError {
+                            upto: i as isize + 1,
+                            cause: "invalid sequence".into(),
+                        }),
+                    );
                 }
                 _ => {
                     output.write_char(as_char(ch as u32));
@@ -244,13 +327,16 @@ impl UTF16Decoder {
         (processed, None)
     }
 
-    fn raw_finish(&mut self, _output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn StringWriter) -> Option<CodecError> {
         let leadbyte = self.leadbyte;
         let leadsurrogate = self.leadsurrogate;
         self.leadbyte = 0xffff;
         self.leadsurrogate = 0xffff;
         if leadbyte != 0xffff || leadsurrogate != 0xffff {
-            Some(CodecError { upto: 0, cause: "incomplete sequence".into() })
+            Some(CodecError {
+                upto: 0,
+                cause: "incomplete sequence".into(),
+            })
         } else {
             None
         }
@@ -264,17 +350,27 @@ struct UTF16LEDecoder {
 }
 
 impl UTF16LEDecoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(UTF16LEDecoder { inner: UTF16Decoder::new() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(UTF16LEDecoder {
+            inner: UTF16Decoder::new(),
+        })
     }
 }
 
 impl RawDecoder for UTF16LEDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { UTF16LEDecoder::new() }
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
-        self.inner.raw_feed(input, output, |lead: u16, trail: u8| lead | ((trail as u16) << 8))
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        UTF16LEDecoder::new()
     }
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
+        self.inner.raw_feed(input, output, |lead: u16, trail: u8| {
+            lead | ((trail as u16) << 8)
+        })
+    }
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         self.inner.raw_finish(output)
     }
 }
@@ -286,17 +382,27 @@ struct UTF16BEDecoder {
 }
 
 impl UTF16BEDecoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(UTF16BEDecoder { inner: UTF16Decoder::new() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(UTF16BEDecoder {
+            inner: UTF16Decoder::new(),
+        })
     }
 }
 
 impl RawDecoder for UTF16BEDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { UTF16BEDecoder::new() }
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
-        self.inner.raw_feed(input, output, |lead: u16, trail: u8| (lead << 8) | trail as u16)
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        UTF16BEDecoder::new()
     }
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
+        self.inner.raw_feed(input, output, |lead: u16, trail: u8| {
+            (lead << 8) | trail as u16
+        })
+    }
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         self.inner.raw_finish(output)
     }
 }
@@ -307,24 +413,29 @@ mod tests {
     // since big endian is easier to inspect we test UTF16BEEncoding only.
 
     use super::UTF16BEEncoding;
-    use types::*;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
         let mut e = UTF16BEEncoding.raw_encoder();
-        assert_feed_ok!(e, "\u{0}\
+        assert_feed_ok!(
+            e,
+            "\u{0}\
                             \u{1}\u{02}\u{004}\u{0008}\
                             \u{10}\u{020}\u{0040}\u{80}\
                             \u{100}\u{0200}\u{400}\u{800}\
                             \u{1000}\u{2000}\u{4000}\u{8000}\
-                            \u{ffff}", "",
-                        [0x00, 0x00,
-                         0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08,
-                         0x00, 0x10, 0x00, 0x20, 0x00, 0x40, 0x00, 0x80,
-                         0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00,
-                         0x10, 0x00, 0x20, 0x00, 0x40, 0x00, 0x80, 0x00,
-                         0xff, 0xff]);
-        assert_feed_ok!(e, "\u{10000}\
+                            \u{ffff}",
+            "",
+            [
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00, 0x10, 0x00, 0x20,
+                0x00, 0x40, 0x00, 0x80, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00, 0x10, 0x00,
+                0x20, 0x00, 0x40, 0x00, 0x80, 0x00, 0xff, 0xff
+            ]
+        );
+        assert_feed_ok!(
+            e,
+            "\u{10000}\
                             \u{10001}\u{010002}\
                             \u{10004}\u{010008}\
                             \u{10010}\u{010020}\
@@ -335,50 +446,52 @@ mod tests {
                             \u{14000}\u{018000}\
                             \u{20000}\u{030000}\
                             \u{50000}\u{090000}\
-                            \u{10FFFF}", "",
-                        [0xd8, 0x00, 0xdc, 0x00,
-                         0xd8, 0x00, 0xdc, 0x01, 0xd8, 0x00, 0xdc, 0x02,
-                         0xd8, 0x00, 0xdc, 0x04, 0xd8, 0x00, 0xdc, 0x08,
-                         0xd8, 0x00, 0xdc, 0x10, 0xd8, 0x00, 0xdc, 0x20,
-                         0xd8, 0x00, 0xdc, 0x40, 0xd8, 0x00, 0xdc, 0x80,
-                         0xd8, 0x00, 0xdd, 0x00, 0xd8, 0x00, 0xde, 0x00,
-                         0xd8, 0x01, 0xdc, 0x00, 0xd8, 0x02, 0xdc, 0x00,
-                         0xd8, 0x04, 0xdc, 0x00, 0xd8, 0x08, 0xdc, 0x00,
-                         0xd8, 0x10, 0xdc, 0x00, 0xd8, 0x20, 0xdc, 0x00,
-                         0xd8, 0x40, 0xdc, 0x00, 0xd8, 0x80, 0xdc, 0x00,
-                         0xd9, 0x00, 0xdc, 0x00, 0xda, 0x00, 0xdc, 0x00,
-                         0xdb, 0xff, 0xdf, 0xff]);
+                            \u{10FFFF}",
+            "",
+            [
+                0xd8, 0x00, 0xdc, 0x00, 0xd8, 0x00, 0xdc, 0x01, 0xd8, 0x00, 0xdc, 0x02, 0xd8, 0x00,
+                0xdc, 0x04, 0xd8, 0x00, 0xdc, 0x08, 0xd8, 0x00, 0xdc, 0x10, 0xd8, 0x00, 0xdc, 0x20,
+                0xd8, 0x00, 0xdc, 0x40, 0xd8, 0x00, 0xdc, 0x80, 0xd8, 0x00, 0xdd, 0x00, 0xd8, 0x00,
+                0xde, 0x00, 0xd8, 0x01, 0xdc, 0x00, 0xd8, 0x02, 0xdc, 0x00, 0xd8, 0x04, 0xdc, 0x00,
+                0xd8, 0x08, 0xdc, 0x00, 0xd8, 0x10, 0xdc, 0x00, 0xd8, 0x20, 0xdc, 0x00, 0xd8, 0x40,
+                0xdc, 0x00, 0xd8, 0x80, 0xdc, 0x00, 0xd9, 0x00, 0xdc, 0x00, 0xda, 0x00, 0xdc, 0x00,
+                0xdb, 0xff, 0xdf, 0xff
+            ]
+        );
         assert_finish_ok!(e, []);
     }
 
     #[test]
     fn test_decoder_valid() {
         let mut d = UTF16BEEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x00, 0x00,
-                            0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08,
-                            0x00, 0x10, 0x00, 0x20, 0x00, 0x40, 0x00, 0x80,
-                            0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00,
-                            0x10, 0x00, 0x20, 0x00, 0x40, 0x00, 0x80, 0x00,
-                            0xff, 0xff], [],
-                        "\u{0}\
+        assert_feed_ok!(
+            d,
+            [
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00, 0x10, 0x00, 0x20,
+                0x00, 0x40, 0x00, 0x80, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00, 0x10, 0x00,
+                0x20, 0x00, 0x40, 0x00, 0x80, 0x00, 0xff, 0xff
+            ],
+            [],
+            "\u{0}\
                          \u{1}\u{02}\u{004}\u{0008}\
                          \u{10}\u{020}\u{0040}\u{80}\
                          \u{100}\u{0200}\u{400}\u{800}\
                          \u{1000}\u{2000}\u{4000}\u{8000}\
-                         \u{ffff}");
-        assert_feed_ok!(d, [0xd8, 0x00, 0xdc, 0x00,
-                            0xd8, 0x00, 0xdc, 0x01, 0xd8, 0x00, 0xdc, 0x02,
-                            0xd8, 0x00, 0xdc, 0x04, 0xd8, 0x00, 0xdc, 0x08,
-                            0xd8, 0x00, 0xdc, 0x10, 0xd8, 0x00, 0xdc, 0x20,
-                            0xd8, 0x00, 0xdc, 0x40, 0xd8, 0x00, 0xdc, 0x80,
-                            0xd8, 0x00, 0xdd, 0x00, 0xd8, 0x00, 0xde, 0x00,
-                            0xd8, 0x01, 0xdc, 0x00, 0xd8, 0x02, 0xdc, 0x00,
-                            0xd8, 0x04, 0xdc, 0x00, 0xd8, 0x08, 0xdc, 0x00,
-                            0xd8, 0x10, 0xdc, 0x00, 0xd8, 0x20, 0xdc, 0x00,
-                            0xd8, 0x40, 0xdc, 0x00, 0xd8, 0x80, 0xdc, 0x00,
-                            0xd9, 0x00, 0xdc, 0x00, 0xda, 0x00, 0xdc, 0x00,
-                            0xdb, 0xff, 0xdf, 0xff], [],
-                        "\u{10000}\
+                         \u{ffff}"
+        );
+        assert_feed_ok!(
+            d,
+            [
+                0xd8, 0x00, 0xdc, 0x00, 0xd8, 0x00, 0xdc, 0x01, 0xd8, 0x00, 0xdc, 0x02, 0xd8, 0x00,
+                0xdc, 0x04, 0xd8, 0x00, 0xdc, 0x08, 0xd8, 0x00, 0xdc, 0x10, 0xd8, 0x00, 0xdc, 0x20,
+                0xd8, 0x00, 0xdc, 0x40, 0xd8, 0x00, 0xdc, 0x80, 0xd8, 0x00, 0xdd, 0x00, 0xd8, 0x00,
+                0xde, 0x00, 0xd8, 0x01, 0xdc, 0x00, 0xd8, 0x02, 0xdc, 0x00, 0xd8, 0x04, 0xdc, 0x00,
+                0xd8, 0x08, 0xdc, 0x00, 0xd8, 0x10, 0xdc, 0x00, 0xd8, 0x20, 0xdc, 0x00, 0xd8, 0x40,
+                0xdc, 0x00, 0xd8, 0x80, 0xdc, 0x00, 0xd9, 0x00, 0xdc, 0x00, 0xda, 0x00, 0xdc, 0x00,
+                0xdb, 0xff, 0xdf, 0xff
+            ],
+            [],
+            "\u{10000}\
                          \u{10001}\u{010002}\
                          \u{10004}\u{010008}\
                          \u{10010}\u{010020}\
@@ -389,7 +502,8 @@ mod tests {
                          \u{14000}\u{018000}\
                          \u{20000}\u{030000}\
                          \u{50000}\u{090000}\
-                         \u{10FFFF}");
+                         \u{10FFFF}"
+        );
         assert_finish_ok!(d, "");
     }
 
@@ -591,4 +705,3 @@ mod tests {
         assert_finish_ok!(d, "");
     }
 }
-

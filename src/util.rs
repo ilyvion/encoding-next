@@ -4,11 +4,11 @@
 
 //! Internal utilities.
 
-use std::{str, char, mem};
-use std::marker::PhantomData;
+use crate::types;
 use std::convert::Into;
 use std::default::Default;
-use types;
+use std::marker::PhantomData;
+use std::{char, mem, str};
 
 /// Unchecked conversion to `char`.
 pub fn as_char(ch: u32) -> char {
@@ -23,10 +23,10 @@ pub struct StrCharIndexIterator<'r> {
 }
 
 impl<'r> Iterator for StrCharIndexIterator<'r> {
-    type Item = ((usize,usize), char);
+    type Item = ((usize, usize), char);
 
     #[inline]
-    fn next(&mut self) -> Option<((usize,usize), char)> {
+    fn next(&mut self) -> Option<((usize, usize), char)> {
         if let Some(ch) = self.chars.next() {
             let prev = self.index;
             let next = prev + ch.len_utf8();
@@ -46,7 +46,10 @@ pub trait StrCharIndex<'r> {
 impl<'r> StrCharIndex<'r> for &'r str {
     /// Iterates over each character with corresponding byte offset range.
     fn index_iter(&self) -> StrCharIndexIterator<'r> {
-        StrCharIndexIterator { index: 0, chars: self.chars() }
+        StrCharIndexIterator {
+            index: 0,
+            chars: self.chars(),
+        }
     }
 }
 
@@ -57,7 +60,7 @@ pub struct StatefulDecoderHelper<'a, St, Data: 'a> {
     /// The current index to the buffer.
     pub pos: usize,
     /// The output buffer.
-    pub output: &'a mut (types::StringWriter + 'a),
+    pub output: &'a mut (dyn types::StringWriter + 'a),
     /// The last codec error. The caller will later collect this.
     pub err: Option<types::CodecError>,
     /// The additional data attached for the use from transition functions.
@@ -69,18 +72,30 @@ pub struct StatefulDecoderHelper<'a, St, Data: 'a> {
 impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     /// Makes a new decoder context out of given buffer and output callback.
     #[inline(always)]
-    pub fn new(buf: &'a [u8], output: &'a mut (types::StringWriter + 'a),
-               data: &'a Data) -> StatefulDecoderHelper<'a, St, Data> {
-        StatefulDecoderHelper { buf: buf, pos: 0, output: output, err: None,
-                                data: data, _marker: PhantomData }
+    pub fn new(
+        buf: &'a [u8],
+        output: &'a mut (dyn types::StringWriter + 'a),
+        data: &'a Data,
+    ) -> StatefulDecoderHelper<'a, St, Data> {
+        StatefulDecoderHelper {
+            buf: buf,
+            pos: 0,
+            output: output,
+            err: None,
+            data: data,
+            _marker: PhantomData,
+        }
     }
 
     /// Reads one byte from the buffer if any.
     #[inline(always)]
     pub fn read(&mut self) -> Option<u8> {
         match self.buf.get(self.pos) {
-            Some(&c) => { self.pos += 1; Some(c) }
-            None => None
+            Some(&c) => {
+                self.pos += 1;
+                Some(c)
+            }
+            None => None,
         }
     }
 
@@ -96,7 +111,7 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     /// If this is the last expr in the rules, also resets back to the initial state.
     #[inline(always)]
     pub fn emit(&mut self, c: u32) -> St {
-        self.output.write_char(unsafe {mem::transmute(c)});
+        self.output.write_char(unsafe { mem::transmute(c) });
         Default::default()
     }
 
@@ -112,7 +127,10 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     /// If this is the last expr in the rules, also resets back to the initial state.
     #[inline(always)]
     pub fn err(&mut self, msg: &'static str) -> St {
-        self.err = Some(types::CodecError { upto: self.pos as isize, cause: msg.into() });
+        self.err = Some(types::CodecError {
+            upto: self.pos as isize,
+            cause: msg.into(),
+        });
         Default::default()
     }
 
@@ -124,7 +142,10 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     #[inline(always)]
     pub fn backup_and_err(&mut self, backup: usize, msg: &'static str) -> St {
         let upto = self.pos as isize - backup as isize;
-        self.err = Some(types::CodecError { upto: upto, cause: msg.into() });
+        self.err = Some(types::CodecError {
+            upto: upto,
+            cause: msg.into(),
+        });
         Default::default()
     }
 }
@@ -170,7 +191,7 @@ macro_rules! stateful_decoder {
             }
 
             pub mod internal {
-                pub type Context<'a, Data> = ::util::StatefulDecoderHelper<'a, super::State, Data>;
+                pub type Context<'a, Data> = crate::util::StatefulDecoderHelper<'a, super::State, Data>;
 
                 $($item)*
             }
@@ -229,11 +250,11 @@ macro_rules! stateful_decoder {
                 )*
             }
 
-            pub fn raw_feed<T>(mut st: State, input: &[u8], output: &mut ::types::StringWriter,
-                               data: &T) -> (State, usize, Option<::types::CodecError>) {
+            pub fn raw_feed<T>(mut st: State, input: &[u8], output: &mut dyn (crate::types::StringWriter),
+                               data: &T) -> (State, usize, Option<crate::types::CodecError>) {
                 output.writer_hint(input.len());
 
-                let mut ctx = ::util::StatefulDecoderHelper::new(input, output, data);
+                let mut ctx = crate::util::StatefulDecoderHelper::new(input, output, data);
                 let mut processed = 0;
 
                 let st_ = match st {
@@ -271,10 +292,10 @@ macro_rules! stateful_decoder {
                 (st, processed, None)
             }
 
-            pub fn raw_finish<T>(mut st: State, output: &mut ::types::StringWriter,
-                                 data: &T) -> (State, Option<::types::CodecError>) {
+            pub fn raw_finish<T>(mut st: State, output: &mut dyn (crate::types::StringWriter),
+                                 data: &T) -> (State, Option<crate::types::CodecError>) {
                 #![allow(unused_mut, unused_variables)]
-                let mut ctx = ::util::StatefulDecoderHelper::new(&[], output, data);
+                let mut ctx = crate::util::StatefulDecoderHelper::new(&[], output, data);
                 let st = match ::std::mem::replace(&mut st, $inist) {
                     $inist => { let $inictx = &mut ctx; $($inifin);+ },
                     $(
@@ -319,4 +340,3 @@ macro_rules! stateful_decoder {
         }
     );
 }
-

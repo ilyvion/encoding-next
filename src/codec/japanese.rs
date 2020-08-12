@@ -4,12 +4,12 @@
 
 //! Legacy Japanese encodings based on JIS X 0208 and JIS X 0212.
 
+use self::ISO2022JPState::{Katakana, Lead, ASCII};
+use crate::index_japanese as index;
+use crate::types::*;
+use crate::util::StrCharIndex;
 use std::convert::Into;
 use std::default::Default;
-use util::StrCharIndex;
-use index_japanese as index;
-use types::*;
-use self::ISO2022JPState::{ASCII,Katakana,Lead};
 
 /**
  * EUC-JP. (XXX with asymmetric JIS X 0212 support)
@@ -30,10 +30,18 @@ use self::ISO2022JPState::{ASCII,Katakana,Lead};
 pub struct EUCJPEncoding;
 
 impl Encoding for EUCJPEncoding {
-    fn name(&self) -> &'static str { "euc-jp" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("euc-jp") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { EUCJPEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { EUCJP0212Decoder::new() }
+    fn name(&self) -> &'static str {
+        "euc-jp"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("euc-jp")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        EUCJPEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        EUCJP0212Decoder::new()
+    }
 }
 
 /// An encoder for EUC-JP with unused G3 character set.
@@ -41,31 +49,51 @@ impl Encoding for EUCJPEncoding {
 pub struct EUCJPEncoder;
 
 impl EUCJPEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(EUCJPEncoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(EUCJPEncoder)
+    }
 }
 
 impl RawEncoder for EUCJPEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { EUCJPEncoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        EUCJPEncoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
-        for ((i,j), ch) in input.index_iter() {
+        for ((i, j), ch) in input.index_iter() {
             match ch {
-                '\u{0}'...'\u{7f}' => { output.write_byte(ch as u8); }
-                '\u{a5}' => { output.write_byte(0x5c); }
-                '\u{203e}' => { output.write_byte(0x7e); }
-                '\u{ff61}'...'\u{ff9f}' => {
+                '\u{0}'..='\u{7f}' => {
+                    output.write_byte(ch as u8);
+                }
+                '\u{a5}' => {
+                    output.write_byte(0x5c);
+                }
+                '\u{203e}' => {
+                    output.write_byte(0x7e);
+                }
+                '\u{ff61}'..='\u{ff9f}' => {
                     output.write_byte(0x8e);
                     output.write_byte((ch as usize - 0xff61 + 0xa1) as u8);
                 }
                 _ => {
                     let ptr = index::jis0208::backward(ch as u32);
                     if ptr == 0xffff {
-                        return (i, Some(CodecError {
-                            upto: j as isize, cause: "unrepresentable character".into()
-                        }));
+                        return (
+                            i,
+                            Some(CodecError {
+                                upto: j as isize,
+                                cause: "unrepresentable character".into(),
+                            }),
+                        );
                     } else {
                         let lead = ptr / 94 + 0xa1;
                         let trail = ptr % 94 + 0xa1;
@@ -78,7 +106,7 @@ impl RawEncoder for EUCJPEncoder {
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -90,22 +118,32 @@ struct EUCJP0212Decoder {
 }
 
 impl EUCJP0212Decoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(EUCJP0212Decoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(EUCJP0212Decoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for EUCJP0212Decoder {
-    fn from_self(&self) -> Box<RawDecoder> { EUCJP0212Decoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        EUCJP0212Decoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = eucjp::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = eucjp::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -116,24 +154,24 @@ stateful_decoder! {
     module eucjp;
 
     internal pub fn map_two_0208_bytes(lead: u8, trail: u8) -> u32 {
-        use index_japanese as index;
+        use crate::index_japanese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0xa1...0xfe, 0xa1...0xfe) => (lead - 0xa1) * 94 + trail - 0xa1,
+            (0xa1..=0xfe, 0xa1..=0xfe) => (lead - 0xa1) * 94 + trail - 0xa1,
             _ => 0xffff,
         };
         index::jis0208::forward(index)
     }
 
     internal pub fn map_two_0212_bytes(lead: u8, trail: u8) -> u32 {
-        use index_japanese as index;
+        use crate::index_japanese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0xa1...0xfe, 0xa1...0xfe) => (lead - 0xa1) * 94 + trail - 0xa1,
+            (0xa1..=0xfe, 0xa1..=0xfe) => (lead - 0xa1) * 94 + trail - 0xa1,
             _ => 0xffff,
         };
         index::jis0212::forward(index)
@@ -142,32 +180,32 @@ stateful_decoder! {
 initial:
     // euc-jp lead = 0x00
     state S0(ctx: Context) {
-        case b @ 0x00...0x7f => ctx.emit(b as u32);
+        case b @ 0x00..=0x7f => ctx.emit(b as u32);
         case 0x8e => S1(ctx);
         case 0x8f => S2(ctx);
-        case b @ 0xa1...0xfe => S3(ctx, b);
+        case b @ 0xa1..=0xfe => S3(ctx, b);
         case _ => ctx.err("invalid sequence");
     }
 
 transient:
     // euc-jp lead = 0x8e
     state S1(ctx: Context) {
-        case b @ 0xa1...0xdf => ctx.emit(0xff61 + b as u32 - 0xa1);
-        case 0xa1...0xfe => ctx.err("invalid sequence");
+        case b @ 0xa1..=0xdf => ctx.emit(0xff61 + b as u32 - 0xa1);
+        case 0xa1..=0xfe => ctx.err("invalid sequence");
         case _ => ctx.backup_and_err(1, "invalid sequence");
     }
 
     // euc-jp lead = 0x8f
     // JIS X 0201 half-width katakana
     state S2(ctx: Context) {
-        case b @ 0xa1...0xfe => S4(ctx, b);
+        case b @ 0xa1..=0xfe => S4(ctx, b);
         case _ => ctx.backup_and_err(1, "invalid sequence");
     }
 
     // euc-jp lead != 0x00, euc-jp jis0212 flag = unset
     // JIS X 0208 two-byte sequence
     state S3(ctx: Context, lead: u8) {
-        case b @ 0xa1...0xfe => match map_two_0208_bytes(lead, b) {
+        case b @ 0xa1..=0xfe => match map_two_0208_bytes(lead, b) {
             // do NOT backup, we only backup for out-of-range trails.
             0xffff => ctx.err("invalid sequence"),
             ch => ctx.emit(ch as u32)
@@ -178,7 +216,7 @@ transient:
     // euc-jp lead != 0x00, euc-jp jis0212 flag = set
     // JIS X 0212 three-byte sequence
     state S4(ctx: Context, lead: u8) {
-        case b @ 0xa1...0xfe => match map_two_0212_bytes(lead, b) {
+        case b @ 0xa1..=0xfe => match map_two_0212_bytes(lead, b) {
             // do NOT backup, we only backup for out-of-range trails.
             0xffff => ctx.err("invalid sequence"),
             ch => ctx.emit(ch as u32)
@@ -191,8 +229,8 @@ transient:
 mod eucjp_tests {
     extern crate test;
     use super::EUCJPEncoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -202,8 +240,18 @@ mod eucjp_tests {
         assert_feed_ok!(e, "", "", []);
         assert_feed_ok!(e, "\u{a5}", "", [0x5c]);
         assert_feed_ok!(e, "\u{203e}", "", [0x7e]);
-        assert_feed_ok!(e, "\u{306b}\u{307b}\u{3093}", "", [0xa4, 0xcb, 0xa4, 0xdb, 0xa4, 0xf3]);
-        assert_feed_ok!(e, "\u{ff86}\u{ff8e}\u{ff9d}", "", [0x8e, 0xc6, 0x8e, 0xce, 0x8e, 0xdd]);
+        assert_feed_ok!(
+            e,
+            "\u{306b}\u{307b}\u{3093}",
+            "",
+            [0xa4, 0xcb, 0xa4, 0xdb, 0xa4, 0xf3]
+        );
+        assert_feed_ok!(
+            e,
+            "\u{ff86}\u{ff8e}\u{ff9d}",
+            "",
+            [0x8e, 0xc6, 0x8e, 0xce, 0x8e, 0xdd]
+        );
         assert_feed_ok!(e, "\u{65e5}\u{672c}", "", [0xc6, 0xfc, 0xcb, 0xdc]);
         assert_finish_ok!(e, []);
     }
@@ -213,7 +261,12 @@ mod eucjp_tests {
         // these characters are double-mapped to both EUDC area and Shift_JIS extension area
         // but only the former should be used. (note that U+FFE2 is triple-mapped!)
         let mut e = EUCJPEncoding.raw_encoder();
-        assert_feed_ok!(e, "\u{9ed1}\u{2170}\u{ffe2}", "", [0xfc, 0xee, 0xfc, 0xf1, 0xa2, 0xcc]);
+        assert_feed_ok!(
+            e,
+            "\u{9ed1}\u{2170}\u{ffe2}",
+            "",
+            [0xfc, 0xee, 0xfc, 0xf1, 0xa2, 0xcc]
+        );
         assert_finish_ok!(e, []);
     }
 
@@ -235,8 +288,18 @@ mod eucjp_tests {
         assert_feed_ok!(d, [], [], "");
         assert_feed_ok!(d, [0x5c], [], "\\");
         assert_feed_ok!(d, [0x7e], [], "~");
-        assert_feed_ok!(d, [0xa4, 0xcb, 0xa4, 0xdb, 0xa4, 0xf3], [], "\u{306b}\u{307b}\u{3093}");
-        assert_feed_ok!(d, [0x8e, 0xc6, 0x8e, 0xce, 0x8e, 0xdd], [], "\u{ff86}\u{ff8e}\u{ff9d}");
+        assert_feed_ok!(
+            d,
+            [0xa4, 0xcb, 0xa4, 0xdb, 0xa4, 0xf3],
+            [],
+            "\u{306b}\u{307b}\u{3093}"
+        );
+        assert_feed_ok!(
+            d,
+            [0x8e, 0xc6, 0x8e, 0xce, 0x8e, 0xdd],
+            [],
+            "\u{ff86}\u{ff8e}\u{ff9d}"
+        );
         assert_feed_ok!(d, [0xc6, 0xfc, 0xcb, 0xdc], [], "\u{65e5}\u{672c}");
         assert_feed_ok!(d, [0x8f, 0xcb, 0xc6, 0xec, 0xb8], [], "\u{736c}\u{8c78}");
         assert_finish_ok!(d, "");
@@ -415,19 +478,17 @@ mod eucjp_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            EUCJPEncoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(EUCJPEncoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = EUCJPEncoding.encode(testutils::JAPANESE_TEXT,
-                                     EncoderTrap::Strict).ok().unwrap();
+        let s = EUCJPEncoding
+            .encode(testutils::JAPANESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            EUCJPEncoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(EUCJPEncoding.decode(&s, DecoderTrap::Strict)))
     }
 }
 
@@ -450,10 +511,18 @@ mod eucjp_tests {
 pub struct Windows31JEncoding;
 
 impl Encoding for Windows31JEncoding {
-    fn name(&self) -> &'static str { "windows-31j" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("shift_jis") } // WHATWG compatibility
-    fn raw_encoder(&self) -> Box<RawEncoder> { Windows31JEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { Windows31JDecoder::new() }
+    fn name(&self) -> &'static str {
+        "windows-31j"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("shift_jis")
+    } // WHATWG compatibility
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        Windows31JEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        Windows31JDecoder::new()
+    }
 }
 
 /// An encoder for Shift_JIS with IBM/NEC extensions.
@@ -461,36 +530,56 @@ impl Encoding for Windows31JEncoding {
 pub struct Windows31JEncoder;
 
 impl Windows31JEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(Windows31JEncoder) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(Windows31JEncoder)
+    }
 }
 
 impl RawEncoder for Windows31JEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { Windows31JEncoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        Windows31JEncoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
-        for ((i,j), ch) in input.index_iter() {
+        for ((i, j), ch) in input.index_iter() {
             match ch {
-                '\u{0}'...'\u{80}' => { output.write_byte(ch as u8); }
-                '\u{a5}' => { output.write_byte(0x5c); }
-                '\u{203e}' => { output.write_byte(0x7e); }
-                '\u{ff61}'...'\u{ff9f}' => {
+                '\u{0}'..='\u{80}' => {
+                    output.write_byte(ch as u8);
+                }
+                '\u{a5}' => {
+                    output.write_byte(0x5c);
+                }
+                '\u{203e}' => {
+                    output.write_byte(0x7e);
+                }
+                '\u{ff61}'..='\u{ff9f}' => {
                     output.write_byte((ch as usize - 0xff61 + 0xa1) as u8);
                 }
                 _ => {
                     // corresponds to the "index shift_jis pointer" in the WHATWG spec
                     let ptr = index::jis0208::backward_remapped(ch as u32);
                     if ptr == 0xffff {
-                        return (i, Some(CodecError {
-                            upto: j as isize, cause: "unrepresentable character".into(),
-                        }));
+                        return (
+                            i,
+                            Some(CodecError {
+                                upto: j as isize,
+                                cause: "unrepresentable character".into(),
+                            }),
+                        );
                     } else {
                         let lead = ptr / 188;
-                        let leadoffset = if lead < 0x1f {0x81} else {0xc1};
+                        let leadoffset = if lead < 0x1f { 0x81 } else { 0xc1 };
                         let trail = ptr % 188;
-                        let trailoffset = if trail < 0x3f {0x40} else {0x41};
+                        let trailoffset = if trail < 0x3f { 0x40 } else { 0x41 };
                         output.write_byte((lead + leadoffset) as u8);
                         output.write_byte((trail + trailoffset) as u8);
                     }
@@ -500,7 +589,7 @@ impl RawEncoder for Windows31JEncoder {
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -512,22 +601,32 @@ struct Windows31JDecoder {
 }
 
 impl Windows31JDecoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(Windows31JDecoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(Windows31JDecoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for Windows31JDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { Windows31JDecoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        Windows31JDecoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = windows31j::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = windows31j::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -538,17 +637,17 @@ stateful_decoder! {
     module windows31j;
 
     internal pub fn map_two_0208_bytes(lead: u8, trail: u8) -> u32 {
-        use index_japanese as index;
+        use crate::index_japanese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let leadoffset = if lead < 0xa0 {0x81} else {0xc1};
         let trailoffset = if trail < 0x7f {0x40} else {0x41};
         let index = match (lead, trail) {
-            (0xf0...0xf9, 0x40...0x7e) | (0xf0...0xf9, 0x80...0xfc) =>
+            (0xf0..=0xf9, 0x40..=0x7e) | (0xf0..=0xf9, 0x80..=0xfc) =>
                 return (0xe000 + (lead - 0xf0) * 188 + trail - trailoffset) as u32,
-            (0x81...0x9f, 0x40...0x7e) | (0x81...0x9f, 0x80...0xfc) |
-            (0xe0...0xfc, 0x40...0x7e) | (0xe0...0xfc, 0x80...0xfc) =>
+            (0x81..=0x9f, 0x40..=0x7e) | (0x81..=0x9f, 0x80..=0xfc) |
+            (0xe0..=0xfc, 0x40..=0x7e) | (0xe0..=0xfc, 0x80..=0xfc) =>
                 (lead - leadoffset) * 188 + trail - trailoffset,
             _ => 0xffff,
         };
@@ -558,9 +657,9 @@ stateful_decoder! {
 initial:
     // shift_jis lead = 0x00
     state S0(ctx: Context) {
-        case b @ 0x00...0x80 => ctx.emit(b as u32);
-        case b @ 0xa1...0xdf => ctx.emit(0xff61 + b as u32 - 0xa1);
-        case b @ 0x81...0x9f, b @ 0xe0...0xfc => S1(ctx, b);
+        case b @ 0x00..=0x80 => ctx.emit(b as u32);
+        case b @ 0xa1..=0xdf => ctx.emit(0xff61 + b as u32 - 0xa1);
+        case b @ 0x81..=0x9f, b @ 0xe0..=0xfc => S1(ctx, b);
         case _ => ctx.err("invalid sequence");
     }
 
@@ -578,8 +677,8 @@ transient:
 mod windows31j_tests {
     extern crate test;
     use super::Windows31JEncoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -589,7 +688,12 @@ mod windows31j_tests {
         assert_feed_ok!(e, "", "", []);
         assert_feed_ok!(e, "\u{a5}", "", [0x5c]);
         assert_feed_ok!(e, "\u{203e}", "", [0x7e]);
-        assert_feed_ok!(e, "\u{306b}\u{307b}\u{3093}", "", [0x82, 0xc9, 0x82, 0xd9, 0x82, 0xf1]);
+        assert_feed_ok!(
+            e,
+            "\u{306b}\u{307b}\u{3093}",
+            "",
+            [0x82, 0xc9, 0x82, 0xd9, 0x82, 0xf1]
+        );
         assert_feed_ok!(e, "\u{ff86}\u{ff8e}\u{ff9d}", "", [0xc6, 0xce, 0xdd]);
         assert_feed_ok!(e, "\u{65e5}\u{672c}", "", [0x93, 0xfa, 0x96, 0x7b]);
         assert_finish_ok!(e, []);
@@ -609,7 +713,12 @@ mod windows31j_tests {
         // these characters are double-mapped to both EUDC area and Shift_JIS extension area
         // but only the latter should be used. (note that U+FFE2 is triple-mapped!)
         let mut e = Windows31JEncoding.raw_encoder();
-        assert_feed_ok!(e, "\u{9ed1}\u{2170}\u{ffe2}", "", [0xfc, 0x4b, 0xfa, 0x40, 0x81, 0xca]);
+        assert_feed_ok!(
+            e,
+            "\u{9ed1}\u{2170}\u{ffe2}",
+            "",
+            [0xfc, 0x4b, 0xfa, 0x40, 0x81, 0xca]
+        );
         assert_finish_ok!(e, []);
     }
 
@@ -631,7 +740,12 @@ mod windows31j_tests {
         assert_feed_ok!(d, [0x5c], [], "\\");
         assert_feed_ok!(d, [0x7e], [], "~");
         assert_feed_ok!(d, [0x80], [], "\u{80}"); // compatibility
-        assert_feed_ok!(d, [0x82, 0xc9, 0x82, 0xd9, 0x82, 0xf1], [], "\u{306b}\u{307b}\u{3093}");
+        assert_feed_ok!(
+            d,
+            [0x82, 0xc9, 0x82, 0xd9, 0x82, 0xf1],
+            [],
+            "\u{306b}\u{307b}\u{3093}"
+        );
         assert_feed_ok!(d, [0xc6, 0xce, 0xdd], [], "\u{ff86}\u{ff8e}\u{ff9d}");
         assert_feed_ok!(d, [0x93, 0xfa, 0x96, 0x7b], [], "\u{65e5}\u{672c}");
         assert_finish_ok!(d, "");
@@ -739,19 +853,17 @@ mod windows31j_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            Windows31JEncoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(Windows31JEncoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = Windows31JEncoding.encode(testutils::JAPANESE_TEXT,
-                                          EncoderTrap::Strict).ok().unwrap();
+        let s = Windows31JEncoding
+            .encode(testutils::JAPANESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            Windows31JEncoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(Windows31JEncoding.decode(&s, DecoderTrap::Strict)))
     }
 }
 
@@ -772,34 +884,52 @@ mod windows31j_tests {
 pub struct ISO2022JPEncoding;
 
 impl Encoding for ISO2022JPEncoding {
-    fn name(&self) -> &'static str { "iso-2022-jp" }
-    fn whatwg_name(&self) -> Option<&'static str> { Some("iso-2022-jp") }
-    fn raw_encoder(&self) -> Box<RawEncoder> { ISO2022JPEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { ISO2022JPDecoder::new() }
+    fn name(&self) -> &'static str {
+        "iso-2022-jp"
+    }
+    fn whatwg_name(&self) -> Option<&'static str> {
+        Some("iso-2022-jp")
+    }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> {
+        ISO2022JPEncoder::new()
+    }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> {
+        ISO2022JPDecoder::new()
+    }
 }
 
-#[derive(PartialEq,Clone,Copy)]
+#[derive(PartialEq, Clone, Copy)]
 enum ISO2022JPState {
-    ASCII, // U+0000..007F, U+00A5, U+203E
+    ASCII,    // U+0000..007F, U+00A5, U+203E
     Katakana, // JIS X 0201: U+FF61..FF9F
-    Lead, // JIS X 0208
+    Lead,     // JIS X 0208
 }
 
 /// An encoder for ISO-2022-JP without JIS X 0212/0213 support.
 #[derive(Clone, Copy)]
 pub struct ISO2022JPEncoder {
-    st: ISO2022JPState
+    st: ISO2022JPState,
 }
 
 impl ISO2022JPEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(ISO2022JPEncoder { st: ASCII }) }
+    pub fn new() -> Box<dyn RawEncoder> {
+        Box::new(ISO2022JPEncoder { st: ASCII })
+    }
 }
 
 impl RawEncoder for ISO2022JPEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { ISO2022JPEncoder::new() }
-    fn is_ascii_compatible(&self) -> bool { true }
+    fn from_self(&self) -> Box<dyn RawEncoder> {
+        ISO2022JPEncoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        true
+    }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &str,
+        output: &mut dyn ByteWriter,
+    ) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
         let mut st = self.st;
@@ -813,12 +943,21 @@ impl RawEncoder for ISO2022JPEncoder {
             () => (if st != Lead { output.write_bytes(b"\x1b$B"); st = Lead; })
         );
 
-        for ((i,j), ch) in input.index_iter() {
+        for ((i, j), ch) in input.index_iter() {
             match ch {
-                '\u{0}'...'\u{7f}' => { ensure_ASCII!(); output.write_byte(ch as u8); }
-                '\u{a5}' => { ensure_ASCII!(); output.write_byte(0x5c); }
-                '\u{203e}' => { ensure_ASCII!(); output.write_byte(0x7e); }
-                '\u{ff61}'...'\u{ff9f}' => {
+                '\u{0}'..='\u{7f}' => {
+                    ensure_ASCII!();
+                    output.write_byte(ch as u8);
+                }
+                '\u{a5}' => {
+                    ensure_ASCII!();
+                    output.write_byte(0x5c);
+                }
+                '\u{203e}' => {
+                    ensure_ASCII!();
+                    output.write_byte(0x7e);
+                }
+                '\u{ff61}'..='\u{ff9f}' => {
                     ensure_Katakana!();
                     output.write_byte((ch as usize - 0xff61 + 0x21) as u8);
                 }
@@ -826,9 +965,13 @@ impl RawEncoder for ISO2022JPEncoder {
                     let ptr = index::jis0208::backward(ch as u32);
                     if ptr == 0xffff {
                         self.st = st; // do NOT reset the state!
-                        return (i, Some(CodecError {
-                            upto: j as isize, cause: "unrepresentable character".into()
-                        }));
+                        return (
+                            i,
+                            Some(CodecError {
+                                upto: j as isize,
+                                cause: "unrepresentable character".into(),
+                            }),
+                        );
                     } else {
                         ensure_Lead!();
                         let lead = ptr / 94 + 0x21;
@@ -844,7 +987,7 @@ impl RawEncoder for ISO2022JPEncoder {
         (input.len(), None)
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -856,22 +999,32 @@ struct ISO2022JPDecoder {
 }
 
 impl ISO2022JPDecoder {
-    pub fn new() -> Box<RawDecoder> {
-        Box::new(ISO2022JPDecoder { st: Default::default() })
+    pub fn new() -> Box<dyn RawDecoder> {
+        Box::new(ISO2022JPDecoder {
+            st: Default::default(),
+        })
     }
 }
 
 impl RawDecoder for ISO2022JPDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { ISO2022JPDecoder::new() }
-    fn is_ascii_compatible(&self) -> bool { false }
+    fn from_self(&self) -> Box<dyn RawDecoder> {
+        ISO2022JPDecoder::new()
+    }
+    fn is_ascii_compatible(&self) -> bool {
+        false
+    }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(
+        &mut self,
+        input: &[u8],
+        output: &mut dyn StringWriter,
+    ) -> (usize, Option<CodecError>) {
         let (st, processed, err) = iso2022jp::raw_feed(self.st, input, output, &());
         self.st = st;
         (processed, err)
     }
 
-    fn raw_finish(&mut self, output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, output: &mut dyn StringWriter) -> Option<CodecError> {
         let (st, err) = iso2022jp::raw_finish(self.st, output, &());
         self.st = st;
         err
@@ -882,24 +1035,24 @@ stateful_decoder! {
     module iso2022jp;
 
     internal pub fn map_two_0208_bytes(lead: u8, trail: u8) -> u32 {
-        use index_japanese as index;
+        use crate::index_japanese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0x21...0x7e, 0x21...0x7e) => (lead - 0x21) * 94 + trail - 0x21,
+            (0x21..=0x7e, 0x21..=0x7e) => (lead - 0x21) * 94 + trail - 0x21,
             _ => 0xffff,
         };
         index::jis0208::forward(index)
     }
 
     internal pub fn map_two_0212_bytes(lead: u8, trail: u8) -> u32 {
-        use index_japanese as index;
+        use crate::index_japanese as index;
 
         let lead = lead as u16;
         let trail = trail as u16;
         let index = match (lead, trail) {
-            (0x21...0x7e, 0x21...0x7e) => (lead - 0x21) * 94 + trail - 0x21,
+            (0x21..=0x7e, 0x21..=0x7e) => (lead - 0x21) * 94 + trail - 0x21,
             _ => 0xffff,
         };
         index::jis0212::forward(index)
@@ -909,7 +1062,7 @@ initial:
     // iso-2022-jp state = ASCII, iso-2022-jp jis0212 flag = unset, iso-2022-jp lead = 0x00
     state ASCII(ctx: Context) {
         case 0x1b => EscapeStart(ctx);
-        case b @ 0x00...0x7f => ctx.emit(b as u32), ASCII(ctx);
+        case b @ 0x00..=0x7f => ctx.emit(b as u32), ASCII(ctx);
         case _ => ctx.err("invalid sequence"), ASCII(ctx);
         final => ctx.reset();
     }
@@ -934,7 +1087,7 @@ checkpoint:
     // iso-2022-jp state = Katakana
     state Katakana(ctx: Context) {
         case 0x1b => EscapeStart(ctx);
-        case b @ 0x21...0x5f => ctx.emit(0xff61 + b as u32 - 0x21), Katakana(ctx);
+        case b @ 0x21..=0x5f => ctx.emit(0xff61 + b as u32 - 0x21), Katakana(ctx);
         case _ => ctx.err("invalid sequence"), Katakana(ctx);
         final => ctx.reset();
     }
@@ -1002,8 +1155,8 @@ transient:
 mod iso2022jp_tests {
     extern crate test;
     use super::ISO2022JPEncoding;
-    use testutils;
-    use types::*;
+    use crate::testutils;
+    use crate::types::*;
 
     #[test]
     fn test_encoder_valid() {
@@ -1014,13 +1167,20 @@ mod iso2022jp_tests {
         assert_feed_ok!(e, "", "", []);
         assert_feed_ok!(e, "\u{a5}", "", [0x5c]);
         assert_feed_ok!(e, "\u{203e}", "", [0x7e]);
-        assert_feed_ok!(e, "\u{306b}\u{307b}\u{3093}", "", [0x1b, 0x24, 0x42,
-                                                            0x24, 0x4b, 0x24, 0x5b, 0x24, 0x73]);
+        assert_feed_ok!(
+            e,
+            "\u{306b}\u{307b}\u{3093}",
+            "",
+            [0x1b, 0x24, 0x42, 0x24, 0x4b, 0x24, 0x5b, 0x24, 0x73]
+        );
         assert_feed_ok!(e, "\u{65e5}\u{672c}", "", [0x46, 0x7c, 0x4b, 0x5c]);
-        assert_feed_ok!(e, "\u{ff86}\u{ff8e}\u{ff9d}", "", [0x1b, 0x28, 0x49,
-                                                            0x46, 0x4e, 0x5d]);
-        assert_feed_ok!(e, "XYZ", "", [0x1b, 0x28, 0x42,
-                                       0x58, 0x59, 0x5a]);
+        assert_feed_ok!(
+            e,
+            "\u{ff86}\u{ff8e}\u{ff9d}",
+            "",
+            [0x1b, 0x28, 0x49, 0x46, 0x4e, 0x5d]
+        );
+        assert_feed_ok!(e, "XYZ", "", [0x1b, 0x28, 0x42, 0x58, 0x59, 0x5a]);
         assert_finish_ok!(e, []);
 
         // one ASCII character and two similarly looking characters:
@@ -1036,7 +1196,7 @@ mod iso2022jp_tests {
         const BE: &'static [u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
         const CE: &'static [u8] = &[0x1b, 0x28, 0x49, 0x48];
         let mut e = ISO2022JPEncoding.raw_encoder();
-        let decoded: String = ["\x20",      BD, CD, AD, CD, BD, AD].concat();
+        let decoded: String = ["\x20", BD, CD, AD, CD, BD, AD].concat();
         let encoded: Vec<_> = [&[0x20][..], BE, CE, AE, CE, BE, AE].concat();
         assert_feed_ok!(e, decoded, "", encoded);
         assert_finish_ok!(e, []);
@@ -1057,39 +1217,52 @@ mod iso2022jp_tests {
         let mut d = ISO2022JPEncoding.raw_decoder();
         assert_feed_ok!(d, [0x41], [], "A");
         assert_feed_ok!(d, [0x42, 0x43], [], "BC");
-        assert_feed_ok!(d, [0x1b, 0x28, 0x4a,
-                            0x44, 0x45, 0x46], [], "DEF");
+        assert_feed_ok!(d, [0x1b, 0x28, 0x4a, 0x44, 0x45, 0x46], [], "DEF");
         assert_feed_ok!(d, [], [], "");
         assert_feed_ok!(d, [0x5c], [], "\\");
         assert_feed_ok!(d, [0x7e], [], "~");
-        assert_feed_ok!(d, [0x1b, 0x24, 0x42,
-                            0x24, 0x4b,
-                            0x1b, 0x24, 0x42,
-                            0x24, 0x5b, 0x24, 0x73], [], "\u{306b}\u{307b}\u{3093}");
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x24, 0x42, 0x24, 0x4b, 0x1b, 0x24, 0x42, 0x24, 0x5b, 0x24, 0x73],
+            [],
+            "\u{306b}\u{307b}\u{3093}"
+        );
         assert_feed_ok!(d, [0x46, 0x7c, 0x4b, 0x5c], [], "\u{65e5}\u{672c}");
-        assert_feed_ok!(d, [0x1b, 0x28, 0x49,
-                            0x46, 0x4e, 0x5d], [], "\u{ff86}\u{ff8e}\u{ff9d}");
-        assert_feed_ok!(d, [0x1b, 0x24, 0x28, 0x44,
-                            0x4b, 0x46,
-                            0x1b, 0x24, 0x40,
-                            0x6c, 0x38], [], "\u{736c}\u{8c78}");
-        assert_feed_ok!(d, [0x1b, 0x28, 0x42,
-                            0x58, 0x59, 0x5a], [], "XYZ");
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x28, 0x49, 0x46, 0x4e, 0x5d],
+            [],
+            "\u{ff86}\u{ff8e}\u{ff9d}"
+        );
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x24, 0x28, 0x44, 0x4b, 0x46, 0x1b, 0x24, 0x40, 0x6c, 0x38],
+            [],
+            "\u{736c}\u{8c78}"
+        );
+        assert_feed_ok!(d, [0x1b, 0x28, 0x42, 0x58, 0x59, 0x5a], [], "XYZ");
         assert_finish_ok!(d, "");
 
         let mut d = ISO2022JPEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x1b, 0x24, 0x42,
-                            0x24, 0x4b, 0x24, 0x5b, 0x24, 0x73], [], "\u{306b}\u{307b}\u{3093}");
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x24, 0x42, 0x24, 0x4b, 0x24, 0x5b, 0x24, 0x73],
+            [],
+            "\u{306b}\u{307b}\u{3093}"
+        );
         assert_finish_ok!(d, "");
 
         let mut d = ISO2022JPEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x1b, 0x28, 0x49,
-                            0x46, 0x4e, 0x5d], [], "\u{ff86}\u{ff8e}\u{ff9d}");
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x28, 0x49, 0x46, 0x4e, 0x5d],
+            [],
+            "\u{ff86}\u{ff8e}\u{ff9d}"
+        );
         assert_finish_ok!(d, "");
 
         let mut d = ISO2022JPEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x1b, 0x24, 0x28, 0x44,
-                            0x4b, 0x46], [], "\u{736c}");
+        assert_feed_ok!(d, [0x1b, 0x24, 0x28, 0x44, 0x4b, 0x46], [], "\u{736c}");
         assert_finish_ok!(d, "");
 
         // one ASCII character and three similarly looking characters:
@@ -1102,13 +1275,35 @@ mod iso2022jp_tests {
         const BD: &'static str = "\u{30cd}";
         const CD: &'static str = "\u{ff88}";
         const DD: &'static str = "\u{793b}";
-        const AE: &'static [u8] = &[0x1b, 0x28, 0x42,       0x20];
-        const BE: &'static [u8] = &[0x1b, 0x24, 0x42,       0x25, 0x4d];
-        const CE: &'static [u8] = &[0x1b, 0x28, 0x49,       0x48];
+        const AE: &'static [u8] = &[0x1b, 0x28, 0x42, 0x20];
+        const BE: &'static [u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
+        const CE: &'static [u8] = &[0x1b, 0x28, 0x49, 0x48];
         const DE: &'static [u8] = &[0x1b, 0x24, 0x28, 0x44, 0x50, 0x4b];
         let mut d = ISO2022JPEncoding.raw_decoder();
-        let dec: String = ["\x20",     AD,BD,BD,CD,CD,AD,CD,BD,AD,DD,DD,BD,DD,CD,DD,AD].concat();
-        let enc: Vec<_> = [&[0x20][..],AE,BE,BE,CE,CE,AE,CE,BE,AE,DE,DE,BE,DE,CE,DE,AE].concat();
+        let dec: String = [
+            "\x20", AD, BD, BD, CD, CD, AD, CD, BD, AD, DD, DD, BD, DD, CD, DD, AD,
+        ]
+        .concat();
+        let enc: Vec<_> = [
+            &[0x20][..],
+            AE,
+            BE,
+            BE,
+            CE,
+            CE,
+            AE,
+            CE,
+            BE,
+            AE,
+            DE,
+            DE,
+            BE,
+            DE,
+            CE,
+            DE,
+            AE,
+        ]
+        .concat();
         assert_feed_ok!(d, enc, [], dec);
         assert_finish_ok!(d, "");
     }
@@ -1152,14 +1347,18 @@ mod iso2022jp_tests {
     fn test_decoder_carriage_return() {
         // CR in Lead state "resets to ASCII"
         let mut d = ISO2022JPEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x1b, 0x24, 0x42,
-                            0x25, 0x4d,
-                            0x0a,
-                            0x25, 0x4d], [], "\u{30cd}\n\x25\x4d");
-        assert_feed_ok!(d, [0x1b, 0x24, 0x28, 0x44,
-                            0x50, 0x4b,
-                            0x0a,
-                            0x50, 0x4b], [], "\u{793b}\n\x50\x4b");
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x24, 0x42, 0x25, 0x4d, 0x0a, 0x25, 0x4d],
+            [],
+            "\u{30cd}\n\x25\x4d"
+        );
+        assert_feed_ok!(
+            d,
+            [0x1b, 0x24, 0x28, 0x44, 0x50, 0x4b, 0x0a, 0x50, 0x4b],
+            [],
+            "\u{793b}\n\x50\x4b"
+        );
         assert_finish_ok!(d, "");
 
         // other states don't allow CR
@@ -1198,14 +1397,22 @@ mod iso2022jp_tests {
         assert_feed_ok!(d, [], [0x1b, 0x28], "");
         assert_finish_err!(d, ""); // no backup
 
-        assert_eq!(ISO2022JPEncoding.decode(&[0x1b], DecoderTrap::Replace),
-                   Ok("\u{fffd}".to_string()));
-        assert_eq!(ISO2022JPEncoding.decode(&[0x1b, 0x24], DecoderTrap::Replace),
-                   Ok("\u{fffd}".to_string()));
-        assert_eq!(ISO2022JPEncoding.decode(&[0x1b, 0x24, 0x28], DecoderTrap::Replace),
-                   Ok("\u{fffd}\x28".to_string()));
-        assert_eq!(ISO2022JPEncoding.decode(&[0x1b, 0x28], DecoderTrap::Replace),
-                   Ok("\u{fffd}".to_string()));
+        assert_eq!(
+            ISO2022JPEncoding.decode(&[0x1b], DecoderTrap::Replace),
+            Ok("\u{fffd}".to_string())
+        );
+        assert_eq!(
+            ISO2022JPEncoding.decode(&[0x1b, 0x24], DecoderTrap::Replace),
+            Ok("\u{fffd}".to_string())
+        );
+        assert_eq!(
+            ISO2022JPEncoding.decode(&[0x1b, 0x24, 0x28], DecoderTrap::Replace),
+            Ok("\u{fffd}\x28".to_string())
+        );
+        assert_eq!(
+            ISO2022JPEncoding.decode(&[0x1b, 0x28], DecoderTrap::Replace),
+            Ok("\u{fffd}".to_string())
+        );
     }
 
     #[test]
@@ -1312,13 +1519,19 @@ mod iso2022jp_tests {
     #[test]
     fn test_decoder_feed_after_finish() {
         let mut d = ISO2022JPEncoding.raw_decoder();
-        assert_feed_ok!(d, [0x24, 0x22,
-                            0x1b, 0x24, 0x42,
-                            0x24, 0x22], [0x24], "\x24\x22\u{3042}");
+        assert_feed_ok!(
+            d,
+            [0x24, 0x22, 0x1b, 0x24, 0x42, 0x24, 0x22],
+            [0x24],
+            "\x24\x22\u{3042}"
+        );
         assert_finish_err!(d, "");
-        assert_feed_ok!(d, [0x24, 0x22,
-                            0x1b, 0x24, 0x42,
-                            0x24, 0x22], [], "\x24\x22\u{3042}");
+        assert_feed_ok!(
+            d,
+            [0x24, 0x22, 0x1b, 0x24, 0x42, 0x24, 0x22],
+            [],
+            "\x24\x22\u{3042}"
+        );
         assert_finish_ok!(d, "");
     }
 
@@ -1326,18 +1539,16 @@ mod iso2022jp_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            ISO2022JPEncoding.encode(&s, EncoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(ISO2022JPEncoding.encode(&s, EncoderTrap::Strict)))
     }
 
     #[bench]
     fn bench_decode_short_text(bencher: &mut test::Bencher) {
-        let s = ISO2022JPEncoding.encode(testutils::JAPANESE_TEXT,
-                                         EncoderTrap::Strict).ok().unwrap();
+        let s = ISO2022JPEncoding
+            .encode(testutils::JAPANESE_TEXT, EncoderTrap::Strict)
+            .ok()
+            .unwrap();
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box({
-            ISO2022JPEncoding.decode(&s, DecoderTrap::Strict)
-        }))
+        bencher.iter(|| test::black_box(ISO2022JPEncoding.decode(&s, DecoderTrap::Strict)))
     }
 }

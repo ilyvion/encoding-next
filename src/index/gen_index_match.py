@@ -267,99 +267,46 @@ def make_minimal_search(data, invdata, premap, maxsearch):
 
 
 def generate_single_byte_index(opts, crate, name):
-    data = [None] * 128
-    invdata = {}
+    forward, backward = {}, {}
+
     comments = []
     for key, value in read_index(opts, crate, name, comments):
-        assert 0 <= key < 128 and 0 <= value < 0xffff and data[key] is None and value not in invdata
-        data[key] = value
-        invdata[value] = key
+        assert 0 <= key < 128 and 0 <= value < 0xffff and key not in forward and value not in backward
+        forward[key] = value
+        backward[value] = key
 
-    # generate a trie with a minimal amount of data
-    triebits, trielower, trieupper = make_minimal_trie(invdata, lowerlimit=0x10000)
-
-    # generate a bitmap for quickly rejecting invalid chars even in the unoptimized setting
-    bitlen = 0
-    while 2**bitlen <= max(invdata):
-        bitlen += 1
-    bitmapshift = bitlen - 5
-    bitmap = 0
-    for value in invdata:
-        bitmap |= 1 << (value >> bitmapshift)
-    assert 2**16 <= bitmap < 2**32
-
-    args = dict(
-        datasz=len(data),
-        maxvalue=max(invdata),
-        bitmap=bitmap,
-        bitmapshift=bitmapshift,
-        triebits=triebits,
-        triemask=(1 << triebits) - 1,
-        trielowersz=len(trielower),
-        trieuppersz=len(trieupper),
-    )
     with mkdir_and_open(crate, name) as f:
         write_header(f, name, comments)
-        write_fmt(f, args, '''\
-           |
-           |#[allow(dead_code)] const X: u16 = 0xffff;
-           |
-           |const FORWARD_TABLE: &'static [u16] = &[
-        ''')
-        write_comma_separated(f, '    ',
-                              ['%s, ' % ('X' if value is None else value) for value in data])
-        write_fmt(f, args, '''\
-           |]; // {datasz} entries
-           |
-           |/// Returns the index code point for pointer `code` in this index.
-           |#[inline]
-           |pub fn forward(code: u8) -> u16 {{
-           |    FORWARD_TABLE[(code - 0x80) as usize]
-           |}}
-           |
-           |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_LOWER: &'static [u8] = &[
-        ''')
-        write_comma_separated(f, '    ',
-                              ['%d, ' % (0 if v is None else v + 0x80) for v in trielower])
-        write_fmt(f, args, '''\
-           |]; // {trielowersz} entries
-           |
-           |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_UPPER: &'static [u16] = &[
-        ''')
-        write_comma_separated(f, '    ', ['%d, ' % v for v in trieupper])
-        write_fmt(f, args, '''\
-           |]; // {trieuppersz} entries
-           |
-           |/// Returns the index pointer for code point `code` in this index.
-           |#[inline]
-           |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |pub fn backward(code: u32) -> u8 {{
-           |    let offset = (code >> {triebits}) as usize;
-           |    let offset = if offset < {trieuppersz} {{BACKWARD_TABLE_UPPER[offset] as usize}} else {{0}};
-           |    BACKWARD_TABLE_LOWER[offset + ((code & {triemask}) as usize)]
-           |}}
-           |
-           |/// Returns the index pointer for code point `code` in this index.
-           |#[cfg(feature = "no-optimized-legacy-encoding")]
-           |pub fn backward(code: u32) -> u8 {{
-           |    if code > {maxvalue} || (({bitmap:#x}u32 >> (code >> {bitmapshift})) & 1) == 0 {{ return 0; }}
-           |    let code = code as u16;
-           |    for i in 0..0x80 {{
-           |        if FORWARD_TABLE[i as usize] == code {{ return 0x80 + i; }}
-           |    }}
-           |    0
-           |}}
-           |
-           |#[cfg(test)]
-           |single_byte_tests! {{
-           |}}
-        ''')
+        def p(*args, **kwargs):
+            print(*args, **kwargs, file=f)
 
-    forwardsz = 2 * len(data)
-    backwardsz = len(trielower) + 2 * len(trieupper)
-    return forwardsz, backwardsz, 0
+        p("#[inline]")
+        p("pub fn forward(code: u8) -> u16 {")
+        p("    match code {")
+        for key, value in forward.items():
+            p(f"        {key} => {value},")
+        p("        _ => 0xffff")
+        p("    }")
+        p("}")
+
+        p()
+
+
+
+        p("#[inline]")
+        p("pub fn backward(code: u32) -> u8 {")
+        p("    match code {")
+        for key, value in backward.items():
+            p(f"        {key} => {value},")
+        p("        _ => 0")
+        p("    }")
+        p("}")
+
+        p()
+        p("#[cfg(test)]")
+        p("single_byte_tests! {}")
+
+    return 0, 0, 0
 
 
 def generate_multi_byte_index(opts, crate, name):

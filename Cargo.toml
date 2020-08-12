@@ -11,6 +11,8 @@ keywords = ["encoding", "unicode", "charset"]
 readme = "README.md"
 license = "MIT"
 
+edition = "2018"
+
 [lib]
 name = "encoding"
 
