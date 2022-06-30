@@ -8,7 +8,7 @@ homepage = "https://github.com/lifthrasiir/rust-encoding"
 readme = "../../../README.md"
 license = "CC0-1.0"
 
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "encoding_index_korean"

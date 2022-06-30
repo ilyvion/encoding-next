@@ -8,7 +8,7 @@ homepage = "https://github.com/lifthrasiir/rust-encoding"
 readme = "../../../README.md"
 license = "CC0-1.0"
 
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "encoding_index_japanese"
@@ -20,7 +20,3 @@ no-optimized-legacy-encoding = []
 [dev-dependencies.encoding_index_tests]
 version = "0.1.5"
 path = "../encoding_index_tests"
-
-[profile.test]
-# `test_correct_table` tests tend to be especially slow
-opt-level = 1
