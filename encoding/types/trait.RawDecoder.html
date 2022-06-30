@@ -1,149 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `RawDecoder` trait in crate `encoding`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, RawDecoder">
-
-    <title>encoding::types::RawDecoder - Rust</title>
-
-    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../../main.css">
-    
-
-    
-    
-</head>
-<body class="rustdoc">
-    <!--[if lte IE 8]>
-    <div class="warning">
-        This old browser is unsupported and will most likely display funky
-        things.
-    </div>
-    <![endif]-->
-
-    
-
-    <nav class="sidebar">
-        
-        <p class='location'><a href='../index.html'>encoding</a>::<wbr><a href='index.html'>types</a></p><script>window.sidebarCurrent = {name: 'RawDecoder', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Decoder converting a byte sequence into a Unicode string. This is a lower level interface, and normally `Encoding::decode` should be used instead."><meta name="keywords" content="rust, rustlang, rust-lang, RawDecoder"><title>RawDecoder in encoding::types - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../encoding/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
+        </a><h2 class="location"></h2>
     </nav>
+    <nav class="sidebar"><a class="sidebar-logo" href="../../encoding/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
+        </a><h2 class="location"><a href="#">RawDecoder</a></h2><div class="sidebar-elems"><section><div class="block"><h3 class="sidebar-title"><a href="#required-methods">Required Methods</a></h3><ul><li><a href="#tymethod.from_self">from_self</a></li><li><a href="#tymethod.raw_feed">raw_feed</a></li><li><a href="#tymethod.raw_finish">raw_finish</a></li></ul></div><div class="block"><h3 class="sidebar-title"><a href="#provided-methods">Provided Methods</a></h3><ul><li><a href="#method.is_ascii_compatible">is_ascii_compatible</a></li></ul></div><div class="block"><h3 class="sidebar-title"><a href="#implementors">Implementors</a></h3></div></section><h2 class="location"><a href="index.html">In encoding::types</a></h2></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../encoding/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1">
+                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
+                        </div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
+    <h1 class="fqn"><span class="in-band">Trait <a href="../index.html">encoding</a>::<wbr><a href="index.html">types</a>::<wbr><a class="trait" href="#">RawDecoder</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><div class="docblock item-decl"><pre class="rust trait"><code>pub trait RawDecoder: 'static + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> {
+    fn <a href="#tymethod.from_self" class="fnname">from_self</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> + 'static, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/alloc/struct.Global.html" title="struct alloc::alloc::Global">Global</a>&gt;;
+<span class="item-spacer"></span>    fn <a href="#tymethod.raw_feed" class="fnname">raw_feed</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input: &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>], <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output: &amp;mut dyn <a class="trait" href="../trait.StringWriter.html" title="trait encoding::StringWriter">StringWriter</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; (<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>, <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.CodecError.html" title="struct encoding::CodecError">CodecError</a>&gt;);
+<span class="item-spacer"></span>    fn <a href="#tymethod.raw_finish" class="fnname">raw_finish</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output: &amp;mut dyn <a class="trait" href="../trait.StringWriter.html" title="trait encoding::StringWriter">StringWriter</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.CodecError.html" title="struct encoding::CodecError">CodecError</a>&gt;;
 
-    <nav class="sub">
-        <form class="search-form js-only">
-            <div class="search-container">
-                <input class="search-input" name="search"
-                       autocomplete="off"
-                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
-                       type="search">
-            </div>
-        </form>
-    </nav>
-
-    <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>encoding</a>::<wbr><a href='index.html'>types</a>::<wbr><a class='trait' href=''>RawDecoder</a></span><span class='out-of-band'><span id='render-detail'>
-                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                       [<span class='inner'>&#x2212;</span>]
-                   </a>
-               </span><a id='src-135' class='srclink' href='../../src/encoding/src/types.rs.html#158-177' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait RawDecoder: 'static {
-    fn <a href='#tymethod.from_self' class='fnname'>from_self</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../encoding/types/trait.RawDecoder.html' title='encoding::types::RawDecoder'>RawDecoder</a>&gt;;
-    fn <a href='#tymethod.raw_feed' class='fnname'>raw_feed</a>(&amp;mut self, input: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, output: &amp;mut <a class='trait' href='../../encoding/types/trait.StringWriter.html' title='encoding::types::StringWriter'>StringWriter</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../encoding/types/struct.CodecError.html' title='encoding::types::CodecError'>CodecError</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>;
-    fn <a href='#tymethod.raw_finish' class='fnname'>raw_finish</a>(&amp;mut self, output: &amp;mut <a class='trait' href='../../encoding/types/trait.StringWriter.html' title='encoding::types::StringWriter'>StringWriter</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../encoding/types/struct.CodecError.html' title='encoding::types::CodecError'>CodecError</a>&gt;;
-
-    fn <a href='#method.is_ascii_compatible' class='fnname'>is_ascii_compatible</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> { ... }
-}</pre><div class='docblock'><p>Decoder converting a byte sequence into a Unicode string.
+    fn <a href="#method.is_ascii_compatible" class="fnname">is_ascii_compatible</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a> { ... }
+}</code></pre></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Decoder converting a byte sequence into a Unicode string.
 This is a lower level interface, and normally <code>Encoding::decode</code> should be used instead.</p>
-</div>
-            <h2 id='required-methods'>Required Methods</h2>
-            <div class='methods'>
-        <h3 id='tymethod.from_self' class='method stab '><span id='from_self.v' class='invisible'><code>fn <a href='#tymethod.from_self' class='fnname'>from_self</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../encoding/types/trait.RawDecoder.html' title='encoding::types::RawDecoder'>RawDecoder</a>&gt;</code></span></h3><div class='docblock'><p>Creates a fresh <code>RawDecoder</code> instance which parameters are same as <code>self</code>.</p>
-</div><h3 id='tymethod.raw_feed' class='method stab '><span id='raw_feed.v' class='invisible'><code>fn <a href='#tymethod.raw_feed' class='fnname'>raw_feed</a>(&amp;mut self, input: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, output: &amp;mut <a class='trait' href='../../encoding/types/trait.StringWriter.html' title='encoding::types::StringWriter'>StringWriter</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../encoding/types/struct.CodecError.html' title='encoding::types::CodecError'>CodecError</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></code></span></h3><div class='docblock'><p>Feeds given portion of byte sequence to the encoder,
+</div></details><h2 id="required-methods" class="small-section-header">Required Methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><details class="rustdoc-toggle" open><summary><div id="tymethod.from_self" class="method has-srclink"><div class="rightside"></div><h4 class="code-header">fn <a href="#tymethod.from_self" class="fnname">from_self</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> + 'static, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/alloc/struct.Global.html" title="struct alloc::alloc::Global">Global</a>&gt;</h4></div></summary><div class="docblock"><p>Creates a fresh <code>RawDecoder</code> instance which parameters are same as <code>self</code>.</p>
+</div></details><details class="rustdoc-toggle" open><summary><div id="tymethod.raw_feed" class="method has-srclink"><div class="rightside"></div><h4 class="code-header">fn <a href="#tymethod.raw_feed" class="fnname">raw_feed</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;input: &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>], <br>&nbsp;&nbsp;&nbsp;&nbsp;output: &amp;mut dyn <a class="trait" href="../trait.StringWriter.html" title="trait encoding::StringWriter">StringWriter</a><br>) -&gt; (<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>, <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.CodecError.html" title="struct encoding::CodecError">CodecError</a>&gt;)</h4></div></summary><div class="docblock"><p>Feeds given portion of byte sequence to the encoder,
 pushes the a decoded string at the end of the given output,
 and returns an offset to the first unprocessed byte
 (that can be zero when the first such byte appeared in the prior calls to <code>raw_feed</code>)
 and optional error information (None means success).</p>
-</div><h3 id='tymethod.raw_finish' class='method stab '><span id='raw_finish.v' class='invisible'><code>fn <a href='#tymethod.raw_finish' class='fnname'>raw_finish</a>(&amp;mut self, output: &amp;mut <a class='trait' href='../../encoding/types/trait.StringWriter.html' title='encoding::types::StringWriter'>StringWriter</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../encoding/types/struct.CodecError.html' title='encoding::types::CodecError'>CodecError</a>&gt;</code></span></h3><div class='docblock'><p>Finishes the decoder,
+</div></details><details class="rustdoc-toggle" open><summary><div id="tymethod.raw_finish" class="method has-srclink"><div class="rightside"></div><h4 class="code-header">fn <a href="#tymethod.raw_finish" class="fnname">raw_finish</a>(&amp;mut self, output: &amp;mut dyn <a class="trait" href="../trait.StringWriter.html" title="trait encoding::StringWriter">StringWriter</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.CodecError.html" title="struct encoding::CodecError">CodecError</a>&gt;</h4></div></summary><div class="docblock"><p>Finishes the decoder,
 pushes the a decoded string at the end of the given output,
 and returns optional error information (None means success).</p>
-</div></div>
-            <h2 id='provided-methods'>Provided Methods</h2>
-            <div class='methods'>
-        <h3 id='method.is_ascii_compatible' class='method stab '><span id='is_ascii_compatible.v' class='invisible'><code>fn <a href='#method.is_ascii_compatible' class='fnname'>is_ascii_compatible</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></span></h3><div class='docblock'><p>Returns true if this encoding is compatible to ASCII,
+</div></details></div><h2 id="provided-methods" class="small-section-header">Provided Methods<a href="#provided-methods" class="anchor"></a></h2><div class="methods"><details class="rustdoc-toggle" open><summary><div id="method.is_ascii_compatible" class="method has-srclink"><div class="rightside"></div><h4 class="code-header">fn <a href="#method.is_ascii_compatible" class="fnname">is_ascii_compatible</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></div></summary><div class="docblock"><p>Returns true if this encoding is compatible to ASCII,
 i.e. bytes 00 through 7F always map to U+0000 through U+007F and nothing else.</p>
-</div></div>
-        <h2 id='implementors'>Implementors</h2>
-        <ul class='item-list' id='implementors-list'>
-    <li><code>impl RawDecoder for <a class='struct' href='../../encoding/codec/error/struct.ErrorDecoder.html' title='encoding::codec::error::ErrorDecoder'>ErrorDecoder</a></code></li>
-<li><code>impl RawDecoder for <a class='struct' href='../../encoding/codec/ascii/struct.ASCIIDecoder.html' title='encoding::codec::ascii::ASCIIDecoder'>ASCIIDecoder</a></code></li>
-<li><code>impl RawDecoder for <a class='struct' href='../../encoding/codec/singlebyte/struct.SingleByteDecoder.html' title='encoding::codec::singlebyte::SingleByteDecoder'>SingleByteDecoder</a></code></li>
-<li><code>impl RawDecoder for <a class='struct' href='../../encoding/codec/utf_8/struct.UTF8Decoder.html' title='encoding::codec::utf_8::UTF8Decoder'>UTF8Decoder</a></code></li>
-<li><code>impl&lt;E:&nbsp;Endian&gt; RawDecoder for <a class='struct' href='../../encoding/codec/utf_16/struct.UTF16Decoder.html' title='encoding::codec::utf_16::UTF16Decoder'>UTF16Decoder</a>&lt;E&gt;</code></li>
-</ul><script type="text/javascript" async
-                         src="../../implementors/encoding/types/trait.RawDecoder.js">
-                 </script></section>
-    <section id='search' class="content hidden"></section>
-
-    <section class="footer"></section>
-
-    <aside id="help" class="hidden">
-        <div>
-            <h1 class="hidden">Help</h1>
-
-            <div class="shortcuts">
-                <h2>Keyboard Shortcuts</h2>
-
-                <dl>
-                    <dt>?</dt>
-                    <dd>Show this help dialog</dd>
-                    <dt>S</dt>
-                    <dd>Focus the search field</dd>
-                    <dt>&larrb;</dt>
-                    <dd>Move up in search results</dd>
-                    <dt>&rarrb;</dt>
-                    <dd>Move down in search results</dd>
-                    <dt>&#9166;</dt>
-                    <dd>Go to active search result</dd>
-                    <dt>+</dt>
-                    <dd>Collapse/expand all sections</dd>
-                </dl>
-            </div>
-
-            <div class="infos">
-                <h2>Search Tricks</h2>
-
-                <p>
-                    Prefix searches with a type followed by a colon (e.g.
-                    <code>fn:</code>) to restrict the search to a given type.
-                </p>
-
-                <p>
-                    Accepted types are: <code>fn</code>, <code>mod</code>,
-                    <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>type</code>, <code>macro</code>,
-                    and <code>const</code>.
-                </p>
-
-                <p>
-                    Search functions by type signature (e.g.
-                    <code>vec -> usize</code> or <code>* -> vec</code>)
-                </p>
-            </div>
-        </div>
-    </aside>
-
-    
-
-    <script>
-        window.rootPath = "../../";
-        window.currentCrate = "encoding";
-        window.playgroundUrl = "";
-    </script>
-    <script src="../../jquery.js"></script>
-    <script src="../../main.js"></script>
-    
-    <script defer src="../../search-index.js"></script>
-</body>
-</html>
+</div></details></div><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor"></a></h2><div class="item-list" id="implementors-list"><section id="impl-RawDecoder" class="impl has-srclink"><span class="rightside"><a class="srclink" href="../../src/encoding/codec/ascii.rs.html#92-132">source</a></span><a href="#impl-RawDecoder" class="anchor"></a><h3 class="code-header in-band">impl <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> for <a class="struct" href="../codec/ascii/struct.ASCIIDecoder.html" title="struct encoding::codec::ascii::ASCIIDecoder">ASCIIDecoder</a></h3></section><section id="impl-RawDecoder-1" class="impl has-srclink"><span class="rightside"><a class="srclink" href="../../src/encoding/codec/error.rs.html#76-102">source</a></span><a href="#impl-RawDecoder-1" class="anchor"></a><h3 class="code-header in-band">impl <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> for <a class="struct" href="../codec/error/struct.ErrorDecoder.html" title="struct encoding::codec::error::ErrorDecoder">ErrorDecoder</a></h3></section><section id="impl-RawDecoder-2" class="impl has-srclink"><span class="rightside"><a class="srclink" href="../../src/encoding/codec/singlebyte.rs.html#103-145">source</a></span><a href="#impl-RawDecoder-2" class="anchor"></a><h3 class="code-header in-band">impl <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> for <a class="struct" href="../codec/singlebyte/struct.SingleByteDecoder.html" title="struct encoding::codec::singlebyte::SingleByteDecoder">SingleByteDecoder</a></h3></section><section id="impl-RawDecoder-3" class="impl has-srclink"><span class="rightside"><a class="srclink" href="../../src/encoding/codec/utf_8.rs.html#165-257">source</a></span><a href="#impl-RawDecoder-3" class="anchor"></a><h3 class="code-header in-band">impl <a class="trait" href="../trait.RawDecoder.html" title="trait encoding::RawDecoder">RawDecoder</a> for <a class="struct" href="../codec/utf_8/struct.UTF8Decoder.html" title="struct encoding::codec::utf_8::UTF8Decoder">UTF8Decoder</a></h3></section></div><script type="text/javascript" src="../../implementors/encoding_types/trait.RawDecoder.js" data-ignore-extern-crates="" async></script></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="encoding" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0-nightly (ddcbba036 2022-06-29)" ></div>
+</body></html>
