@@ -45,7 +45,7 @@ jobs:
 
     test:
         name: Test
-        runs-on: ${{ matrix.config.os }}
+        runs-on: ${{ matrix.os }}
         needs: check
         strategy:
             fail-fast: false
@@ -62,27 +62,27 @@ jobs:
               with:
                   submodules: true
 
-            - name: Install ${{ matrix.config.toolchain }} toolchain
+            - name: Install ${{ matrix.toolchain }} toolchain
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: ${{ matrix.config.toolchain }}
+                  toolchain: ${{ matrix.toolchain }}
                   override: true
                   components: rustfmt
 
             - name: Cargo build
               uses: actions-rs/cargo@v1
-              #continue-on-error: ${{ matrix.config.toolchain == 'nightly' }}
+              #continue-on-error: ${{ matrix.toolchain == 'nightly' }}
               with:
                   command: build
-                  args: ${{ matrix.cargo_flags }}
+                  args: ${{ matrix.cargo_flags }} --workspace
 
             - name: Cargo test
               uses: actions-rs/cargo@v1
-              #continue-on-error: ${{ matrix.config.toolchain == 'nightly' }}
+              #continue-on-error: ${{ matrix.toolchain == 'nightly' }}
               with:
                   command: test
-                  args: ${{ matrix.cargo_flags }} -- --nocapture
+                  args: ${{ matrix.cargo_flags }} --workspace -- --nocapture
 
     miri:
         name: Miri
