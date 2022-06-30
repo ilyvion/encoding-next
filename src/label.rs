@@ -8,7 +8,7 @@ use crate::all;
 use crate::types::EncodingRef;
 
 /// Returns an encoding from given label, defined in the WHATWG Encoding standard, if any.
-/// Implements "get an encoding" algorithm: http://encoding.spec.whatwg.org/#concept-encoding-get
+/// Implements "get an encoding" algorithm: <http://encoding.spec.whatwg.org/#concept-encoding-get>
 pub fn encoding_from_whatwg_label(label: &str) -> Option<EncodingRef> {
     let label = label.trim_matches(&[' ', '\n', '\r', '\t', '\x0C'][..]);
     let label: String = label
@@ -98,7 +98,7 @@ pub fn encoding_from_whatwg_label(label: &str) -> Option<EncodingRef> {
 }
 
 /// Returns an encoding from Windows code page number.
-/// http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756%28v=vs.85%29.aspx
+/// <http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756%28v=vs.85%29.aspx>
 /// Sometimes it can return a *superset* of the requested encoding, e.g. for several CJK encodings.
 pub fn encoding_from_windows_code_page(cp: usize) -> Option<EncodingRef> {
     match cp {

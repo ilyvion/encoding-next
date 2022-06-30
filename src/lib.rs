@@ -204,6 +204,8 @@
 //! * Encodings that were originally specified by WHATWG Encoding Standard:
 //!     * HZ
 //! * ISO 8859-1 (distinct from Windows code page 1252)
+//! * ArmSCII-8 (`armscii-8`)
+//! * Code page 437 (`cp437`)
 //!
 //! Parenthesized names refer to the encoding's primary name assigned by WHATWG Encoding Standard.
 //!

@@ -1,0 +1,56 @@
+name: Rust
+
+on:
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    build-rust:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Install nightly toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: nightly
+                  override: true
+
+            - name: Install llvm tools
+              run: rustup component add llvm-tools-preview
+              shell: bash
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@v1.3.0
+
+            - name: Install grcov
+              run: curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
+              shell: bash
+
+            - name: Make executeable
+              run: chmod +x ./calculate-coverage.sh
+
+            - name: Build, Instrument, Test
+              env:
+                  LLVM_PROFILE_FILE: target/debug/coverage/%p-%m.profraw
+                  CARGO_INCREMENTAL: 0
+                  RUSTFLAGS: -Zinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort
+                  RUSTDOCFLAGS: -Cpanic=abort
+              run: ./calculate-coverage.sh
+
+            - name: Upload coverage
+              uses: codecov/codecov-action@v2
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: ./target/debug/coverage/lcov.info
+                  flags: rusttests
+                  name: Cargo Tests
+                  fail_ci_if_error: true
