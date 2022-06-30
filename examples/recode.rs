@@ -31,7 +31,7 @@ fn main() {
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(e) => panic!(e.to_string()),
+        Err(e) => panic!("{}", e.to_string()),
     };
     if matches.opt_present("h") {
         println!(
