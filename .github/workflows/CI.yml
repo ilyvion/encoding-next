@@ -38,6 +38,10 @@ jobs:
             - name: Make executeable
               run: chmod +x ./calculate-coverage.sh
 
+            - name: Disable benchmarks
+              run: find -iname '*.rs' -exec sed -i -- 's/#\[bench\]/\/\/#\[bench\]/' {} +
+              shell: bash
+
             - name: Build, Instrument, Test
               env:
                   LLVM_PROFILE_FILE: target/debug/coverage/%p-%m.profraw

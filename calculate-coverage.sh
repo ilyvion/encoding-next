@@ -8,10 +8,13 @@ export RUSTFLAGS="-Zinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=
 export RUSTDOCFLAGS="-Cpanic=abort"
 
 # build the test binary with coverage instrumentation
-executables=$(cargo test --workspace --tests --no-run --all-features --message-format=json | jq -r "select(.profile.test == true) | .executable")
+executables=($(cargo test --workspace --tests --no-run --all-features --message-format=json | jq -r "select(.profile.test == true) | .executable"))
 
 # run instrumented tests
-$executables
+for e in "${executables[@]}"
+do
+    $e
+done
 
 if [[ "${CI}" ]]
 then
