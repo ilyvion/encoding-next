@@ -30,4 +30,3 @@ pub mod gb18030;
 /// > It therefore only superficially matches the GB18030 standard
 /// > for code points encoded as four bytes.
 pub mod gb18030_ranges;
-

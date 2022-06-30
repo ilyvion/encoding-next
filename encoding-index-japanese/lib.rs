@@ -25,4 +25,3 @@ pub mod jis0208;
 /// > This is the JIS X 0212 standard.
 /// > It is only used by the euc-jp decoder due to lack of widespread support elsewhere.
 pub mod jis0212;
-

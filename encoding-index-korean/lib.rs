@@ -18,4 +18,3 @@ extern crate encoding_index_tests;
 /// > This matches the KS X 1001 standard and the Unified Hangul Code,
 /// > more commonly known together as Windows Codepage 949.
 pub mod euc_kr;
-

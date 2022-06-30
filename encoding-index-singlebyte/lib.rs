@@ -12,7 +12,6 @@
 #[macro_use]
 extern crate encoding_index_tests;
 
-
 /// ARMSCII-8
 pub mod armscii_8;
 
@@ -99,4 +98,3 @@ pub mod windows_1258;
 
 /// MacCyrillic.
 pub mod x_mac_cyrillic;
-
