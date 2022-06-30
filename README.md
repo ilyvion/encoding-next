@@ -3,7 +3,8 @@
 [![Crates.io](https://img.shields.io/crates/v/encoding-next)](https://crates.io/crates/encoding-next)
 [![Crates.io](https://img.shields.io/crates/l/encoding-next)](https://crates.io/crates/encoding-next)
 [![Crates.io](https://img.shields.io/crates/d/encoding-next)](https://crates.io/crates/encoding-next)
-[![Docs.io](https://docs.rs/bevy_doryen/badge.svg)](https://docs.rs/bevy_doryen)
+[![Docs.io](https://docs.rs/encoding-next/badge.svg)](https://docs.rs/encoding-next)
+[![Docs master](https://img.shields.io/static/v1?label=docs&message=master&color=5479ab)](https://alexschrod.github.io/encoding-next/)
 [![Rust](https://github.com/alexschrod/encoding-next/actions/workflows/CI.yml/badge.svg)](https://github.com/alexschrod/encoding-next/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/alexschrod/encoding-next/branch/master/graph/badge.svg?token=C8UJJM7BVJ)](https://codecov.io/gh/alexschrod/encoding-next)
 
