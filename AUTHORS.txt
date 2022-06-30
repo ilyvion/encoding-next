@@ -3,20 +3,26 @@ and also the following people (in ascending order):
 
 Aaron Weiss <aaronweiss74@gmail.com>
 Alex Crichton <alex@alexcrichton.com>
+Alexander Krivács Schrøder <alexschrod@gmail.com>
 Andrew Cann <shum@canndrew.org>
 Aneesh Agrawal <aneeshusa@gmail.com>
 Björn Steinbrink <bsteinbr@gmail.com>
 Brian Koropoff <bkoropoff@gmail.com>
+Bruno Bigras <bigras.bruno@gmail.com>
 Clark Gaebel <cgaebel@mozilla.com>
 D.K <dan.kozlowski@gmail.com>
 Filipe Gonçalves <filipe@codinghighway.com>
 Florian Gilcher <florian.gilcher@asquera.de>
 Frank Denis <github@pureftpd.org>
+Henri Sivonen <hsivonen@hsivonen.fi>
+Igor Gnatenko <i.gnatenko.brain@gmail.com>
 Jack Moffitt <jack@metajack.im>
 Jason Ozias <jason.g.ozias@gmail.com>
 Jason Ozias <jason.ozias@ipaper.com>
+John Parton <john.parton.iv@gmail.com>
 Joonas Javanainen <joonas.javanainen@gmail.com>
 Joshua DeSeno <jdeseno@gmail.com>
+Justinas Stankevicius <justinas@justinas.me>
 Keegan McAllister <kmcallister@mozilla.com>
 Ken Tossell <ken@tossell.net>
 Kyle Dewey <kyledewey@cs.ucsb.edu>
@@ -24,6 +30,7 @@ Manish Goregaokar <manishsmail@gmail.com>
 Matt Brubeck <mbrubeck@limpet.net>
 Michael Neumann <mneumann@ntecs.de>
 Michael Sproul <micsproul@gmail.com>
+Nelson Chen <crazysim@gmail.com>
 Peter Atashian <retep998@gmail.com>
 Pierre Baillet <pierre@baillet.name>
 Robert Straw <drbawb@fatalsyntax.com>
@@ -31,5 +38,8 @@ Simon Sapin <simon.sapin@exyr.org>
 Simonas Kazlauskas <git@kazlauskas.me>
 Son <leson.phung@gmail.com>
 Steve Klabnik <steve@steveklabnik.com>
+Taylor Cramer <cramertj@google.com>
+Yorhel <git@yorhel.nl>
 klutzy <klutzytheklutzy@gmail.com>
+kpcyrd <git@rxv.cc>
 Сухарик <suhr@i2pmail.org>
