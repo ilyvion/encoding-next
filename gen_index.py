@@ -13,6 +13,16 @@ import argparse
 from pathlib import Path
 
 
+CC0_LICENSE = "rust-encoding by Kang Seonghoon
+
+To the extent possible under law, the person who associated CC0 with
+rust-encoding has waived all copyright and related or neighboring rights
+to rust-encoding.
+
+You should have received a copy of the CC0 legalcode along with this
+work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+"
+
 def open_index(path, comments):
     for line in path.open('rb'):
         line = line.strip()
@@ -55,6 +65,14 @@ def read_index(opts, crate, name, comments):
 
     return open_index(cached_path, comments)
 
+def write_license_file(crate);
+    dirname = os.path.join(os.path.dirname(__file__), crate)
+    try:
+        os.mkdir(dirname)
+    except Exception:
+        pass
+    with open(os.path.join(dirname, "LICENSE")) as f:
+        f.write(CC0_LICENSE)
 
 def mkdir_and_open(crate, name):
     crate_path = Path(__file__).parent.resolve() / crate
@@ -1055,6 +1073,7 @@ def main():
         if opts.func_filter and generate is not opts.func_filter:
             continue
         print('generating index %s...' % index, end='', file=sys.stderr)
+        write_license_file(crate)
         forwardsz, backwardsz, backwardszslow = generate(opts, crate, index)
         totalsz += forwardsz + backwardsz
         totalszslow += forwardsz + backwardszslow
