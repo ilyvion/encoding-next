@@ -1,9 +1,6 @@
-// This is a part of rust-encoding.
+// This is a part of encoding-next.
 // Copyright (c) 2014-2015, Kang Seonghoon.
 // See README.md and LICENSE.txt for details.
-
-extern crate encoding;
-extern crate getopts;
 
 use encoding::label::encoding_from_whatwg_label;
 use encoding::{DecoderTrap, EncoderTrap};
@@ -36,7 +33,7 @@ fn main() {
     if matches.opt_present("h") {
         println!(
             "{}",
-            opts.usage("Converts the character encoding using rust-encoding.")
+            opts.usage("Converts the character encoding using encoding-next.")
         );
         return;
     }

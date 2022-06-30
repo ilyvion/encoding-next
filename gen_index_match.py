@@ -1,4 +1,4 @@
-# This is a part of rust-encoding.
+# This is a part of encoding-next.
 # Copyright (c) 2013-2015, Kang Seonghoon.
 # See README.md and LICENSE.txt for details.
 

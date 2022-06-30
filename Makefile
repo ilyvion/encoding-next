@@ -20,22 +20,3 @@ test:
 	cargo +nightly test -v -p encoding-index-simpchinese
 	RUSTFLAGS='-C opt-level=1' cargo +nightly test -v -p encoding-index-tradchinese
 	cargo +nightly test -v -p encoding-types
-
-.PHONY: readme
-readme: README.md
-
-README.md: src/lib.rs
-	# really, really sorry for this mess.
-	awk '/^\/\/! # Encoding /{print "[Encoding][doc]",$$4}' $< > $@
-	awk '/^\/\/! # Encoding /{print "[Encoding][doc]",$$4}' $< | sed 's/./=/g' >> $@
-	echo >> $@
-	echo '[![Encoding on Travis CI][travis-image]][travis]' >> $@
-	echo >> $@
-	echo '[travis-image]: https://travis-ci.org/lifthrasiir/rust-encoding.png' >> $@
-	echo '[travis]: https://travis-ci.org/lifthrasiir/rust-encoding' >> $@
-	awk '/^\/\/! # Encoding /,/^\/\/! ## /' $< | cut -b 5- | grep -v '^#' >> $@
-	echo '[Complete Documentation][doc] (stable)' >> $@
-	echo >> $@
-	echo '[doc]: https://lifthrasiir.github.io/rust-encoding/' >> $@
-	echo >> $@
-	awk '/^\/\/! ## /,!/^\/\/!/' $< | cut -b 5- >> $@

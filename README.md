@@ -1,21 +1,8 @@
-[Encoding][doc] 0.3.0-dev
-=========================
+# Encoding
 
-[![Encoding on Travis CI][travis-image]][travis]
-
-[travis-image]: https://travis-ci.org/lifthrasiir/rust-encoding.png
-[travis]: https://travis-ci.org/lifthrasiir/rust-encoding
-
-Character encoding support for Rust. (also known as `rust-encoding`)
+Character encoding support for Rust.
 It is based on [WHATWG Encoding Standard](http://encoding.spec.whatwg.org/),
 and also provides an advanced interface for error detection and recovery.
-
-*This documentation is for the development version (0.3).
-Please see the [stable documentation][doc] for 0.2.x versions.*
-
-[Complete Documentation][doc] (stable)
-
-[doc]: https://lifthrasiir.github.io/rust-encoding/
 
 ## Usage
 
@@ -23,13 +10,7 @@ Put this in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-encoding = "0.3"
-```
-
-Then put this in your crate root:
-
-```rust
-extern crate encoding;
+encoding-next = "0.3"
 ```
 
 ### Data Table
@@ -168,14 +149,14 @@ You can also use `EncoderTrap::Strict` and `DecoderTrap::Strict` traps to stop o
 
 There are two ways to get `Encoding`:
 
-* `encoding::all` has static items for every supported encoding.
-  You should use them when the encoding would not change or only handful of them are required.
-  Combined with link-time optimization, any unused encoding would be discarded from the binary.
-* `encoding::label` has functions to dynamically get an encoding from given string ("label").
-  They will return a static reference to the encoding,
-  which type is also known as `EncodingRef`.
-  It is useful when a list of required encodings is not available in advance,
-  but it will result in the larger binary and missed optimization opportunities.
+-   `encoding::all` has static items for every supported encoding.
+    You should use them when the encoding would not change or only handful of them are required.
+    Combined with link-time optimization, any unused encoding would be discarded from the binary.
+-   `encoding::label` has functions to dynamically get an encoding from given string ("label").
+    They will return a static reference to the encoding,
+    which type is also known as `EncodingRef`.
+    It is useful when a list of required encodings is not available in advance,
+    but it will result in the larger binary and missed optimization opportunities.
 
 **`RawEncoder`** is an experimental incremental encoder.
 At each step of `raw_feed`, it receives a slice of string
@@ -196,30 +177,30 @@ See the additional documents on `encoding::types` module for more information on
 
 Encoding covers all encodings specified by WHATWG Encoding Standard and some more:
 
-* 7-bit strict ASCII (`ascii`)
-* ArmSCII-8 (`armscii-8`)
-* UTF-8 (`utf-8`)
-* UTF-16 in little endian (`utf-16` or `utf-16le`) and big endian (`utf-16be`)
-* All single byte encoding in WHATWG Encoding Standard:
-    * IBM code page 866
-    * ISO 8859-{2,3,4,5,6,7,8,10,13,14,15,16}
-    * KOI8-R, KOI8-U
-    * MacRoman (`macintosh`), Macintosh Cyrillic encoding (`x-mac-cyrillic`)
-    * Windows code pages 874, 1250, 1251, 1252 (instead of ISO 8859-1), 1253,
-      1254 (instead of ISO 8859-9), 1255, 1256, 1257, 1258
-* All multi byte encodings in WHATWG Encoding Standard:
-    * Windows code page 949 (`euc-kr`, since the strict EUC-KR is hardly used)
-    * EUC-JP and Windows code page 932 (`shift_jis`,
-      since it's the most widespread extension to Shift_JIS)
-    * ISO-2022-JP with asymmetric JIS X 0212 support
-      (Note: this is not yet up to date to the current standard)
-    * GBK
-    * GB 18030
-    * Big5-2003 with HKSCS-2008 extensions
-* Encodings that were originally specified by WHATWG Encoding Standard:
-    * HZ
-* ISO 8859-1 (distinct from Windows code page 1252)
-* Code page 437 (`cp437`)
+-   7-bit strict ASCII (`ascii`)
+-   ArmSCII-8 (`armscii-8`)
+-   UTF-8 (`utf-8`)
+-   UTF-16 in little endian (`utf-16` or `utf-16le`) and big endian (`utf-16be`)
+-   All single byte encoding in WHATWG Encoding Standard:
+    -   IBM code page 866
+    -   ISO 8859-{2,3,4,5,6,7,8,10,13,14,15,16}
+    -   KOI8-R, KOI8-U
+    -   MacRoman (`macintosh`), Macintosh Cyrillic encoding (`x-mac-cyrillic`)
+    -   Windows code pages 874, 1250, 1251, 1252 (instead of ISO 8859-1), 1253,
+        1254 (instead of ISO 8859-9), 1255, 1256, 1257, 1258
+-   All multi byte encodings in WHATWG Encoding Standard:
+    -   Windows code page 949 (`euc-kr`, since the strict EUC-KR is hardly used)
+    -   EUC-JP and Windows code page 932 (`shift_jis`,
+        since it's the most widespread extension to Shift_JIS)
+    -   ISO-2022-JP with asymmetric JIS X 0212 support
+        (Note: this is not yet up to date to the current standard)
+    -   GBK
+    -   GB 18030
+    -   Big5-2003 with HKSCS-2008 extensions
+-   Encodings that were originally specified by WHATWG Encoding Standard:
+    -   HZ
+-   ISO 8859-1 (distinct from Windows code page 1252)
+-   Code page 437 (`cp437`)
 
 Parenthesized names refer to the encoding's primary name assigned by WHATWG Encoding Standard.
 
@@ -229,4 +210,3 @@ Consequently one should be careful when picking a desired character encoding.
 The only standards reliable in this regard are WHATWG Encoding Standard and
 [vendor-provided mappings from the Unicode consortium](http://www.unicode.org/Public/MAPPINGS/).
 Whenever in doubt, look at the source code and specifications for detailed explanations.
-

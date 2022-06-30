@@ -1,9 +1,9 @@
-// This is a part of rust-encoding.
+// This is a part of encoding-next.
 //
 // Any copyright is dedicated to the Public Domain.
 // https://creativecommons.org/publicdomain/zero/1.0/
 
-//! Japanese index tables for [rust-encoding](https://github.com/lifthrasiir/rust-encoding).
+//! Japanese index tables for [encoding-next](https://github.com/alexschrod/encoding-next).
 
 #![cfg_attr(test, feature(test))]
 

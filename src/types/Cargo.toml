@@ -1,15 +1,10 @@
 [package]
 name = "encoding-types"
 version = "0.2.0"
-authors = [
-    "Kang Seonghoon <public+rust@mearie.org>",
-    "Simonas Kazlauskas <github@kazlauskas.me>",
-]
 
 description = "Traits and types for the encoding package"
-homepage = "https://github.com/lifthrasiir/rust-encoding"
-documentation = "https://lifthrasiir.github.io/rust-encoding/"
-repository = "https://github.com/lifthrasiir/rust-encoding"
+homepage = "https://github.com/alexschrod/encoding-next"
+repository = "https://github.com/alexschrod/encoding-next"
 keywords = ["encoding", "unicode", "charset"]
 readme = "README.md"
 license = "MIT"

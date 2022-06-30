@@ -1,15 +1,12 @@
-// This is a part of rust-encoding.
+// This is a part of encoding-next.
 // Copyright (c) 2013-2015, Kang Seonghoon.
 // See README.md and LICENSE.txt for details.
 
-//! # Encoding 0.3.0-dev
+//! # Encoding
 //!
-//! Character encoding support for Rust. (also known as `rust-encoding`)
+//! Character encoding support for Rust.
 //! It is based on [WHATWG Encoding Standard](http://encoding.spec.whatwg.org/),
 //! and also provides an advanced interface for error detection and recovery.
-//!
-//! *This documentation is for the development version (0.3).
-//! Please see the [stable documentation][doc] for 0.2.x versions.*
 //!
 //! ## Usage
 //!
@@ -18,12 +15,6 @@
 //! ```toml
 //! [dependencies]
 //! encoding = "0.3"
-//! ```
-//!
-//! Then put this in your crate root:
-//!
-//! ```rust
-//! extern crate encoding;
 //! ```
 //!
 //! ### Data Table
@@ -47,17 +38,17 @@
 //!
 //! To encode a string:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, EncoderTrap};
 //! use encoding::all::ISO_8859_1;
 //!
 //! assert_eq!(ISO_8859_1.encode("caf\u{e9}", EncoderTrap::Strict),
 //!            Ok(vec![99,97,102,233]));
-//! ~~~~
+//! ```
 //!
 //! To encode a string with unrepresentable characters:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, EncoderTrap};
 //! use encoding::all::ISO_8859_2;
 //!
@@ -68,21 +59,21 @@
 //!            Ok(vec![65,99,109,101]));
 //! assert_eq!(ISO_8859_2.encode("Acme\u{a9}", EncoderTrap::NcrEscape),
 //!            Ok(vec![65,99,109,101,38,35,49,54,57,59]));
-//! ~~~~
+//! ```
 //!
 //! To decode a byte sequence:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, DecoderTrap};
 //! use encoding::all::ISO_8859_1;
 //!
 //! assert_eq!(ISO_8859_1.decode(&[99,97,102,233], DecoderTrap::Strict),
 //!            Ok("caf\u{e9}".to_string()));
-//! ~~~~
+//! ```
 //!
 //! To decode a byte sequence with invalid sequences:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, DecoderTrap};
 //! use encoding::all::ISO_8859_6;
 //!
@@ -91,11 +82,11 @@
 //!            Ok("Acme\u{fffd}".to_string()));
 //! assert_eq!(ISO_8859_6.decode(&[65,99,109,101,169], DecoderTrap::Ignore),
 //!            Ok("Acme".to_string()));
-//! ~~~~
+//! ```
 //!
 //! To encode or decode the input into the already allocated buffer:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, EncoderTrap, DecoderTrap};
 //! use encoding::all::{ISO_8859_2, ISO_8859_6};
 //!
@@ -107,11 +98,11 @@
 //!
 //! assert_eq!(bytes, [65,99,109,101]);
 //! assert_eq!(chars, "Acme\u{fffd}");
-//! ~~~~
+//! ```
 //!
 //! A practical example of custom encoder traps:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, ByteWriter, EncoderTrap, DecoderTrap};
 //! use encoding::types::RawEncoder;
 //! use encoding::all::ASCII;
@@ -130,11 +121,11 @@
 //! let encoded = ASCII.encode(&orig, HEX_NCR_ESCAPE).unwrap();
 //! assert_eq!(ASCII.decode(&encoded, DecoderTrap::Strict),
 //!            Ok("Hello, &#x4e16;&#x754c;!".to_string()));
-//! ~~~~
+//! ```
 //!
 //! Getting the encoding from the string label, as specified in WHATWG Encoding standard:
 //!
-//! ~~~~ {.rust}
+//! ```rust
 //! use encoding::{Encoding, DecoderTrap};
 //! use encoding::label::encoding_from_whatwg_label;
 //! use encoding::all::WINDOWS_949;
@@ -149,7 +140,7 @@
 //! // corresponding Encoding native API:
 //! assert_eq!(WINDOWS_949.decode(broken, DecoderTrap::Replace),
 //!            Ok("\u{c6b0}\u{c640}\u{fffd}\u{c559}".to_string()));
-//! ~~~~
+//! ```
 //!
 //! ## Types and Stuffs
 //!

@@ -1,4 +1,4 @@
-# This is a part of rust-encoding.
+# This is a part of encoding-next.
 # Copyright (c) 2013-2015, Kang Seonghoon.
 # See README.md and LICENSE.txt for details.
 
@@ -13,11 +13,11 @@ import argparse
 from pathlib import Path
 
 
-CC0_LICENSE = "rust-encoding by Kang Seonghoon
+CC0_LICENSE = "encoding-next by Kang Seonghoon
 
 To the extent possible under law, the person who associated CC0 with
-rust-encoding has waived all copyright and related or neighboring rights
-to rust-encoding.
+encoding-next has waived all copyright and related or neighboring rights
+to encoding-next.
 
 You should have received a copy of the CC0 legalcode along with this
 work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.

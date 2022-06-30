@@ -1,12 +1,10 @@
 [package]
-name = "encoding"
-version = "0.3.0-dev"
-authors = ["Kang Seonghoon <public+rust@mearie.org>"]
+name = "encoding-next"
+version = "0.3.0"
 exclude = ["/src/index/*", "/Makefile"]
 description = "Character encoding support for Rust"
-homepage = "https://github.com/lifthrasiir/rust-encoding"
-documentation = "https://lifthrasiir.github.io/rust-encoding/"
-repository = "https://github.com/lifthrasiir/rust-encoding"
+homepage = "https://github.com/alexschrod/encoding-next"
+repository = "https://github.com/alexschrod/encoding-next"
 keywords = ["encoding", "unicode", "charset"]
 readme = "README.md"
 license = "MIT"

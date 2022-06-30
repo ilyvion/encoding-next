@@ -1,4 +1,4 @@
-// This is a part of rust-encoding.
+// This is a part of encoding-next.
 // Copyright (c) 2015, Simonas Kazlauskas
 // See README.md and LICENSE.txt for details.
 

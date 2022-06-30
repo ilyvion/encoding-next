@@ -1,4 +1,4 @@
-// This is a part of rust-encoding.
+// This is a part of encoding-next.
 // Copyright (c) 2013-2015, Kang Seonghoon.
 // See README.md and LICENSE.txt for details.
 //
@@ -258,7 +258,7 @@ impl RawDecoder for UTF8Decoder {
 
 /// Almost equivalent to `std::str::from_utf8`.
 /// This function is provided for the fair benchmark against the stdlib's UTF-8 conversion
-/// functions, as rust-encoding always allocates a new string.
+/// functions, as encoding-next always allocates a new string.
 pub fn from_utf8(input: &[u8]) -> Option<&str> {
     let mut iter = input.iter();
     let mut state;
