@@ -13,7 +13,7 @@ import argparse
 from pathlib import Path
 
 
-CC0_LICENSE = "encoding-next by Kang Seonghoon
+CC0_LICENSE = """encoding-next by Kang Seonghoon
 
 To the extent possible under law, the person who associated CC0 with
 encoding-next has waived all copyright and related or neighboring rights
@@ -21,7 +21,7 @@ to encoding-next.
 
 You should have received a copy of the CC0 legalcode along with this
 work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-"
+"""
 
 def open_index(path, comments):
     for line in path.open('rb'):
@@ -65,13 +65,13 @@ def read_index(opts, crate, name, comments):
 
     return open_index(cached_path, comments)
 
-def write_license_file(crate);
+def write_license_file(crate):
     dirname = os.path.join(os.path.dirname(__file__), crate)
     try:
         os.mkdir(dirname)
     except Exception:
         pass
-    with open(os.path.join(dirname, "LICENSE")) as f:
+    with open(os.path.join(dirname, "LICENSE"), 'w') as f:
         f.write(CC0_LICENSE)
 
 def mkdir_and_open(crate, name):
@@ -105,7 +105,7 @@ def write_fmt(f, args, fmt_or_cond, thenfmt=None, elsefmt=None, **kwargs):
         f.write(dedent(fmt).format(**kwargs))
 
 
-def write_comma_separated(f, prefix, l, width=80):
+def write_comma_separated(f, prefix, l, width=100):
     buffered = ''
     for i in l:
         i = str(i)
@@ -322,7 +322,7 @@ def generate_single_byte_index(opts, crate, name):
            |
            |#[allow(dead_code)] const X: u16 = 0xffff;
            |
-           |const FORWARD_TABLE: &'static [u16] = &[
+           |const FORWARD_TABLE: &[u16] = &[
         ''')
         write_comma_separated(f, '    ',
                               ['%s, ' % ('X' if value is None else value) for value in data])
@@ -336,7 +336,7 @@ def generate_single_byte_index(opts, crate, name):
            |}}
            |
            |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_LOWER: &'static [u8] = &[
+           |const BACKWARD_TABLE_LOWER: &[u8] = &[
         ''')
         write_comma_separated(f, '    ',
                               ['%d, ' % (0 if v is None else v + 0x80) for v in trielower])
@@ -344,7 +344,7 @@ def generate_single_byte_index(opts, crate, name):
            |]; // {trielowersz} entries
            |
            |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_UPPER: &'static [u16] = &[
+           |const BACKWARD_TABLE_UPPER: &[u16] = &[
         ''')
         write_comma_separated(f, '    ', ['%d, ' % v for v in trieupper])
         write_fmt(f, args, '''\
@@ -371,7 +371,7 @@ def generate_single_byte_index(opts, crate, name):
            |}}
            |
            |#[cfg(test)]
-           |single_byte_tests! {{
+           |encoding_index_tests::single_byte_tests! {{
            |}}
         ''')
 
@@ -670,7 +670,7 @@ def generate_multi_byte_index(opts, crate, name):
            |
            |#[allow(dead_code)] const X: u16 = 0xffff;
            |{premapcode}
-           |const FORWARD_TABLE: &'static [u16] = &[
+           |const FORWARD_TABLE: &[u16] = &[
         ''')
         write_comma_separated(f, '    ',
                               ['%s, ' % (data[key] & 0xffff if key in data else 'X')
@@ -687,7 +687,7 @@ def generate_multi_byte_index(opts, crate, name):
                 bits.append(v)
             write_fmt(f, args, '''\
                |
-               |const FORWARD_TABLE_MORE: &'static [u32] = &[
+               |const FORWARD_TABLE_MORE: &[u32] = &[
             ''')
             write_comma_separated(f, '    ', ['%d, ' % v for v in bits])
             write_fmt(f, args, '''\
@@ -723,7 +723,7 @@ def generate_multi_byte_index(opts, crate, name):
            |}}
            |
            |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_LOWER: &'static [u16] = &[
+           |const BACKWARD_TABLE_LOWER: &[u16] = &[
         ''')
         write_comma_separated(f, '    ',
                               ['%s, ' % ('X' if v is None else v) for v in trielower])
@@ -731,7 +731,7 @@ def generate_multi_byte_index(opts, crate, name):
            |]; // {trielowersz} entries
            |
            |#[cfg(not(feature = "no-optimized-legacy-encoding"))]
-           |const BACKWARD_TABLE_UPPER: &'static [u16] = &[
+           |const BACKWARD_TABLE_UPPER: &[u16] = &[
         ''')
         write_comma_separated(f, '    ', ['%d, ' % v for v in trieupper])
         write_fmt(f, args, '''\
@@ -741,7 +741,7 @@ def generate_multi_byte_index(opts, crate, name):
             write_fmt(f, args, '''\
                |
                |#[cfg(feature = "no-optimized-legacy-encoding")]
-               |const BACKWARD_SEARCH_LOWER: &'static [(u16, u16)] = &[
+               |const BACKWARD_SEARCH_LOWER: &[(u16, u16)] = &[
             ''')
             write_comma_separated(f, '    ',
                                   ['(%d, %d), ' % (lo, hi) for lo, hi in searchlower])
@@ -749,7 +749,7 @@ def generate_multi_byte_index(opts, crate, name):
                |]; // {searchlowersz} entries
                |
                |#[cfg(feature = "no-optimized-legacy-encoding")]
-               |const BACKWARD_SEARCH_UPPER: &'static [u16] = &[
+               |const BACKWARD_SEARCH_UPPER: &[u16] = &[
             ''')
             write_comma_separated(f, '    ', ['%d, ' % v for v in searchupper])
             write_fmt(f, args, '''\
@@ -758,7 +758,7 @@ def generate_multi_byte_index(opts, crate, name):
         if remap:
             write_fmt(f, args, '''\
                |
-               |const BACKWARD_TABLE_REMAPPED: &'static [u16] = &[
+               |const BACKWARD_TABLE_REMAPPED: &[u16] = &[
             ''')
             write_comma_separated(f, '    ', ['%d, ' % v for v in remap])
             write_fmt(f, args, '''\
@@ -837,7 +837,7 @@ def generate_multi_byte_index(opts, crate, name):
            |#[inline]
            |pub fn backward_remapped(code: u32) -> u16 {{
            |    let value = backward(code);
-           |    if {remapmin} <= value && value <= {remapmax} {{
+           |    if ({remapmin}..={remapmax}).contains(&value) {{
            |        BACKWARD_TABLE_REMAPPED[(value - {remapmin}) as usize]
            |    }} else {{
            |        value
@@ -847,7 +847,7 @@ def generate_multi_byte_index(opts, crate, name):
         write_fmt(f, args, '''\
            |
            |#[cfg(test)]
-           |multi_byte_tests! {{
+           |encoding_index_tests::multi_byte_tests! {{
         ''')
         write_fmt(f, args, remap, '''\
            |    remap = [{remapmin}, {remapmax}],
@@ -916,13 +916,13 @@ def generate_multi_byte_range_lbound_index(opts, crate, name):
         write_header(f, name, comments)
         write_fmt(f, args, '''\
            |
-           |const FORWARD_TABLE: &'static [u32] = &[
+           |const FORWARD_TABLE: &[u32] = &[
         ''')
         write_comma_separated(f, '    ', ['%d, ' % value for key, value in data])
         write_fmt(f, args, '''\
            |]; // {datasz} entries
            |
-           |const BACKWARD_TABLE: &'static [u32] = &[
+           |const BACKWARD_TABLE: &[u32] = &[
         ''')
         write_comma_separated(f, '    ', ['%d, ' % key for key, value in data])
         write_fmt(f, args, '''\
@@ -975,7 +975,7 @@ def generate_multi_byte_range_lbound_index(opts, crate, name):
            |}}
            |
            |#[cfg(test)]
-           |multi_byte_range_tests! {{
+           |encoding_index_tests::multi_byte_range_tests! {{
            |    key = [{minkey}, {maxkey}], key < {keyubound},
            |    value = [{minvalue}, {maxvalue}], value < {valueubound}
            |}}
@@ -987,44 +987,44 @@ def generate_multi_byte_range_lbound_index(opts, crate, name):
 
 
 INDICES = [
-    ('singlebyte/armscii-8',       generate_single_byte_index),
-    ('singlebyte/cp437',           generate_single_byte_index),
+    ('encoding-index-singlebyte/armscii-8',       generate_single_byte_index),
+    ('encoding-index-singlebyte/cp437',           generate_single_byte_index),
 
-    ('singlebyte/ibm866',          generate_single_byte_index),
-    ('singlebyte/iso-8859-2',      generate_single_byte_index),
-    ('singlebyte/iso-8859-3',      generate_single_byte_index),
-    ('singlebyte/iso-8859-4',      generate_single_byte_index),
-    ('singlebyte/iso-8859-5',      generate_single_byte_index),
-    ('singlebyte/iso-8859-6',      generate_single_byte_index),
-    ('singlebyte/iso-8859-7',      generate_single_byte_index),
-    ('singlebyte/iso-8859-8',      generate_single_byte_index),
-    ('singlebyte/iso-8859-10',     generate_single_byte_index),
-    ('singlebyte/iso-8859-13',     generate_single_byte_index),
-    ('singlebyte/iso-8859-14',     generate_single_byte_index),
-    ('singlebyte/iso-8859-15',     generate_single_byte_index),
-    ('singlebyte/iso-8859-16',     generate_single_byte_index),
-    ('singlebyte/koi8-r',          generate_single_byte_index),
-    ('singlebyte/koi8-u',          generate_single_byte_index),
-    ('singlebyte/macintosh',       generate_single_byte_index),
-    ('singlebyte/windows-874',     generate_single_byte_index),
-    ('singlebyte/windows-1250',    generate_single_byte_index),
-    ('singlebyte/windows-1251',    generate_single_byte_index),
-    ('singlebyte/windows-1252',    generate_single_byte_index),
-    ('singlebyte/windows-1253',    generate_single_byte_index),
-    ('singlebyte/windows-1254',    generate_single_byte_index),
-    ('singlebyte/windows-1255',    generate_single_byte_index),
-    ('singlebyte/windows-1256',    generate_single_byte_index),
-    ('singlebyte/windows-1257',    generate_single_byte_index),
-    ('singlebyte/windows-1258',    generate_single_byte_index),
-    ('singlebyte/x-mac-cyrillic',  generate_single_byte_index),
+    ('encoding-index-singlebyte/ibm866',          generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-2',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-3',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-4',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-5',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-6',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-7',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-8',      generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-10',     generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-13',     generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-14',     generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-15',     generate_single_byte_index),
+    ('encoding-index-singlebyte/iso-8859-16',     generate_single_byte_index),
+    ('encoding-index-singlebyte/koi8-r',          generate_single_byte_index),
+    ('encoding-index-singlebyte/koi8-u',          generate_single_byte_index),
+    ('encoding-index-singlebyte/macintosh',       generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-874',     generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1250',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1251',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1252',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1253',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1254',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1255',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1256',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1257',    generate_single_byte_index),
+    ('encoding-index-singlebyte/windows-1258',    generate_single_byte_index),
+    ('encoding-index-singlebyte/x-mac-cyrillic',  generate_single_byte_index),
 
-    ('tradchinese/big5',           generate_multi_byte_index),
-    ('korean/euc-kr',              generate_multi_byte_index),
-    ('simpchinese/gb18030',        generate_multi_byte_index),
-    ('japanese/jis0208',           generate_multi_byte_index),
-    ('japanese/jis0212',           generate_multi_byte_index),
+    ('encoding-index-tradchinese/big5',           generate_multi_byte_index),
+    ('encoding-index-korean/euc-kr',              generate_multi_byte_index),
+    ('encoding-index-simpchinese/gb18030',        generate_multi_byte_index),
+    ('encoding-index-japanese/jis0208',           generate_multi_byte_index),
+    ('encoding-index-japanese/jis0212',           generate_multi_byte_index),
 
-    ('simpchinese/gb18030-ranges', generate_multi_byte_range_lbound_index),
+    ('encoding-index-simpchinese/gb18030-ranges', generate_multi_byte_range_lbound_index),
 ]
 
 

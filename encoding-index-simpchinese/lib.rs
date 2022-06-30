@@ -8,16 +8,13 @@
 
 #![cfg_attr(test, feature(test))]
 
-#[cfg(test)]
-#[macro_use]
-extern crate encoding_index_tests;
-
 /// GB 18030 two-byte area.
 ///
 /// From the Encoding Standard:
 ///
 /// > This matches the GB18030 standard for code points encoded as two bytes,
 /// > except `0xA3 0xA0` maps to U+3000 to be compatible with deployed content.
+#[rustfmt::skip]
 pub mod gb18030;
 
 /// GB 18030 four-byte area.
@@ -29,4 +26,5 @@ pub mod gb18030;
 /// > whereas they can be represented neatly in 207 ranges combined with trivial limit checks.
 /// > It therefore only superficially matches the GB18030 standard
 /// > for code points encoded as four bytes.
+#[rustfmt::skip]
 pub mod gb18030_ranges;

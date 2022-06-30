@@ -1,12 +1,11 @@
 [package]
-name = "encoding-types"
+name = "encoding-next-types"
 version = "0.2.0"
 
 description = "Traits and types for the encoding package"
 homepage = "https://github.com/alexschrod/encoding-next"
 repository = "https://github.com/alexschrod/encoding-next"
 keywords = ["encoding", "unicode", "charset"]
-readme = "README.md"
 license = "MIT"
 
 edition = "2021"

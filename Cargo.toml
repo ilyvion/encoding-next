@@ -16,11 +16,11 @@ name = "encoding"
 
 [features]
 no-optimized-legacy-encoding = [
-    "encoding-index-singlebyte/no-optimized-legacy-encoding",
-    "encoding-index-korean/no-optimized-legacy-encoding",
-    "encoding-index-japanese/no-optimized-legacy-encoding",
-    "encoding-index-simpchinese/no-optimized-legacy-encoding",
-    "encoding-index-tradchinese/no-optimized-legacy-encoding",
+    "encoding-next-index-singlebyte/no-optimized-legacy-encoding",
+    "encoding-next-index-korean/no-optimized-legacy-encoding",
+    "encoding-next-index-japanese/no-optimized-legacy-encoding",
+    "encoding-next-index-simpchinese/no-optimized-legacy-encoding",
+    "encoding-next-index-tradchinese/no-optimized-legacy-encoding",
 ]
 
 [workspace]
@@ -33,7 +33,7 @@ members = [
     "encoding_index_tests",
 ]
 
-[dependencies.encoding-types]
+[dependencies.encoding-next-types]
 version = "0.2"
 path = "src/types"
 
@@ -45,28 +45,28 @@ path = "src/types"
 # we definitely don't want to use the old index table,
 # so we should use tilde requirements here.
 
-[dependencies.encoding-index-singlebyte]
-version = "~1.20160120.0"
+[dependencies.encoding-next-index-singlebyte]
+version = "~1.20180106.0"
 path = "encoding-index-singlebyte"
 
-[dependencies.encoding-index-korean]
-version = "~1.20141219.6"
+[dependencies.encoding-next-index-korean]
+version = "~1.20180106.0"
 path = "encoding-index-korean"
 
-[dependencies.encoding-index-japanese]
-version = "~1.20141219.6"
+[dependencies.encoding-next-index-japanese]
+version = "~1.20180106.0"
 path = "encoding-index-japanese"
 
-[dependencies.encoding-index-simpchinese]
-version = "~1.20160120.0"
+[dependencies.encoding-next-index-simpchinese]
+version = "~1.20180106.0"
 path = "encoding-index-simpchinese"
 
-[dependencies.encoding-index-tradchinese]
-version = "~1.20141219.6"
+[dependencies.encoding-next-index-tradchinese]
+version = "~1.20180106.0"
 path = "encoding-index-tradchinese"
 
 [dev-dependencies]
-getopts = "*" # for examples
+getopts = "0.2.21" # for examples
 
 [profile.test]
 # `test_correct_table` tests tend to be especially slow

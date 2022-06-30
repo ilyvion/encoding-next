@@ -6,8 +6,7 @@
 // Identifier: f2c6a4f6406b3e86a50a5dba4d2b7dd48e2e33c0d82aefe764535c934ec11764
 // Date: 2018-01-06
 
-#[allow(dead_code)]
-const X: u16 = 0xffff;
+#[allow(dead_code)] const X: u16 = 0xffff;
 
 const FORWARD_TABLE: &[u16] = &[
     196, 197, 199, 201, 209, 214, 220, 225, 224, 226, 228, 227, 229, 231, 233, 232, 234, 235, 237,
@@ -96,28 +95,21 @@ const BACKWARD_TABLE_UPPER: &[u16] = &[
 #[cfg(not(feature = "no-optimized-legacy-encoding"))]
 pub fn backward(code: u32) -> u8 {
     let offset = (code >> 7) as usize;
-    let offset = if offset < 503 {
-        BACKWARD_TABLE_UPPER[offset] as usize
-    } else {
-        0
-    };
+    let offset = if offset < 503 {BACKWARD_TABLE_UPPER[offset] as usize} else {0};
     BACKWARD_TABLE_LOWER[offset + ((code & 127) as usize)]
 }
 
 /// Returns the index pointer for code point `code` in this index.
 #[cfg(feature = "no-optimized-legacy-encoding")]
 pub fn backward(code: u32) -> u8 {
-    if code > 64258 || ((0x80000011u32 >> (code >> 11)) & 1) == 0 {
-        return 0;
-    }
+    if code > 64258 || ((0x80000011u32 >> (code >> 11)) & 1) == 0 { return 0; }
     let code = code as u16;
     for i in 0..0x80 {
-        if FORWARD_TABLE[i as usize] == code {
-            return 0x80 + i;
-        }
+        if FORWARD_TABLE[i as usize] == code { return 0x80 + i; }
     }
     0
 }
 
 #[cfg(test)]
-single_byte_tests! {}
+encoding_index_tests::single_byte_tests! {
+}

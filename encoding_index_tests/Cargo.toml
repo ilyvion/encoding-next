@@ -1,10 +1,9 @@
 [package]
-name = "encoding_index_tests"
+name = "encoding-next_index_tests"
 version = "0.1.5"
 
 description = "Helper macros used to test index tables for character encodings"
 homepage = "https://github.com/alexschrod/encoding-next"
-readme = "../../../README.md"
 license = "CC0-1.0"
 
 edition = "2021"

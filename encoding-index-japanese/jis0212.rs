@@ -6,8 +6,7 @@
 // Identifier: 83bf90dd1c591a4355730d8c4567efc499d74da7490531019ef22a879991cfb7
 // Date: 2018-01-06
 
-#[allow(dead_code)]
-const X: u16 = 0xffff;
+#[allow(dead_code)] const X: u16 = 0xffff;
 
 fn premap_forward(code: u16) -> u16 {
     match code {
@@ -1397,39 +1396,16 @@ const BACKWARD_TABLE_UPPER: &[u16] = &[
 ]; // 2043 entries
 
 #[cfg(feature = "no-optimized-legacy-encoding")]
-const BACKWARD_SEARCH_LOWER: &'static [(u16, u16)] = &[
-    (0, 95),
-    (285, 560),
-    (130, 191),
-    (64, 67),
-    (560, 694),
-    (694, 1003),
-    (1003, 1312),
-    (1307, 1572),
-    (1572, 1830),
-    (38487, 23986),
-    (1830, 2102),
-    (2102, 2386),
-    (2386, 2662),
-    (2662, 2919),
-    (2919, 3193),
-    (3193, 3519),
-    (3519, 3815),
-    (3815, 4077),
-    (4077, 4364),
-    (34149, 34369),
-    (4356, 4673),
-    (4673, 4949),
-    (4949, 5208),
-    (5208, 5593),
-    (5593, 5812),
-    (5812, 6110),
-    (6110, 6361),
-    (32776, 65374),
+const BACKWARD_SEARCH_LOWER: &[(u16, u16)] = &[
+    (0, 95), (285, 560), (130, 191), (64, 67), (560, 694), (694, 1003), (1003, 1312), (1307, 1572),
+    (1572, 1830), (38487, 23986), (1830, 2102), (2102, 2386), (2386, 2662), (2662, 2919),
+    (2919, 3193), (3193, 3519), (3519, 3815), (3815, 4077), (4077, 4364), (34149, 34369),
+    (4356, 4673), (4673, 4949), (4949, 5208), (5208, 5593), (5593, 5812), (5812, 6110),
+    (6110, 6361), (32776, 65374),
 ]; // 28 entries
 
 #[cfg(feature = "no-optimized-legacy-encoding")]
-const BACKWARD_SEARCH_UPPER: &'static [u16] = &[
+const BACKWARD_SEARCH_UPPER: &[u16] = &[
     0, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15,
     16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
     27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 28,
@@ -1440,11 +1416,7 @@ const BACKWARD_SEARCH_UPPER: &'static [u16] = &[
 #[cfg(not(feature = "no-optimized-legacy-encoding"))]
 pub fn backward(code: u32) -> u16 {
     let offset = (code >> 5) as usize;
-    let offset = if offset < 2043 {
-        BACKWARD_TABLE_UPPER[offset] as usize
-    } else {
-        0
-    };
+    let offset = if offset < 2043 {BACKWARD_TABLE_UPPER[offset] as usize} else {0};
     // BACKWARD_TABLE_LOWER stores the actual (pre-mapped) value
     // so we don't have to call premap_backward here.
     BACKWARD_TABLE_LOWER[offset + ((code & 31) as usize)]
@@ -1454,16 +1426,11 @@ pub fn backward(code: u32) -> u16 {
 #[cfg(feature = "no-optimized-legacy-encoding")]
 pub fn backward(code: u32) -> u16 {
     // avoid mistaking a placeholder for the actual value
-    if code == X as u32 {
-        return 0xffff;
-    }
+    if code == X as u32 { return 0xffff; }
     let codelo = (code & 0xffff) as u16;
     let offset = (code >> 10) as usize;
     let (start, end) = if offset < 64 {
-        (
-            BACKWARD_SEARCH_UPPER[offset],
-            BACKWARD_SEARCH_UPPER[offset + 1],
-        )
+        (BACKWARD_SEARCH_UPPER[offset], BACKWARD_SEARCH_UPPER[offset+1])
     } else {
         (0, 0)
     };
@@ -1484,6 +1451,6 @@ pub fn backward(code: u32) -> u16 {
 }
 
 #[cfg(test)]
-multi_byte_tests! {
+encoding_index_tests::multi_byte_tests! {
     dups = []
 }

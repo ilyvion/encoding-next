@@ -1,10 +1,9 @@
 [package]
-name = "encoding-index-japanese"
-version = "1.20141219.6"
+name = "encoding-next-index-japanese"
+version = "1.20180106.0"
 
 description = "Index tables for Japanese character encodings"
 homepage = "https://github.com/alexschrod/encoding-next"
-readme = "../../../README.md"
 license = "CC0-1.0"
 
 edition = "2021"
@@ -16,6 +15,6 @@ path = "lib.rs"
 [features]
 no-optimized-legacy-encoding = []
 
-[dev-dependencies.encoding_index_tests]
+[dev-dependencies.encoding-next_index_tests]
 version = "0.1.5"
 path = "../encoding_index_tests"

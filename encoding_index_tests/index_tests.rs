@@ -120,7 +120,7 @@ macro_rules! multi_byte_tests {
             extern crate test;
             use super::{forward, backward};
 
-            multi_byte_tests!(@shared dups=[$($dups),*]);
+            $crate::multi_byte_tests!(@shared dups=[$($dups),*]);
         }
     );
 
@@ -132,7 +132,7 @@ macro_rules! multi_byte_tests {
             extern crate test;
             use super::{forward, backward, backward_remapped};
 
-            multi_byte_tests!(@shared dups=[$($dups),*]);
+            $crate::multi_byte_tests!(@shared dups=[$($dups),*]);
 
             static REMAP_MIN: u16 = $remap_min;
             static REMAP_MAX: u16 = $remap_max;
