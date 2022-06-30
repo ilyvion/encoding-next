@@ -1,5 +1,12 @@
 # Encoding
 
+[![Crates.io](https://img.shields.io/crates/v/encoding-next)](https://crates.io/crates/encoding-next)
+[![Crates.io](https://img.shields.io/crates/l/encoding-next)](https://crates.io/crates/encoding-next)
+[![Crates.io](https://img.shields.io/crates/d/encoding-next)](https://crates.io/crates/encoding-next)
+[![Docs.io](https://docs.rs/bevy_doryen/badge.svg)](https://docs.rs/bevy_doryen)
+[![Rust](https://github.com/alexschrod/encoding-next/actions/workflows/CI.yml/badge.svg)](https://github.com/alexschrod/encoding-next/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/alexschrod/encoding-next/branch/master/graph/badge.svg?token=C8UJJM7BVJ)](https://codecov.io/gh/alexschrod/encoding-next)
+
 Character encoding support for Rust.
 It is based on [WHATWG Encoding Standard](http://encoding.spec.whatwg.org/),
 and also provides an advanced interface for error detection and recovery.
