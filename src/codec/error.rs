@@ -28,6 +28,7 @@ impl Encoding for ErrorEncoding {
 pub struct ErrorEncoder;
 
 impl ErrorEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(ErrorEncoder)
     }
@@ -66,6 +67,7 @@ impl RawEncoder for ErrorEncoder {
 pub struct ErrorDecoder;
 
 impl ErrorDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(ErrorDecoder)
     }
@@ -81,7 +83,7 @@ impl RawDecoder for ErrorDecoder {
         input: &[u8],
         _output: &mut dyn StringWriter,
     ) -> (usize, Option<CodecError>) {
-        if input.len() > 0 {
+        if !input.is_empty() {
             (
                 0,
                 Some(CodecError {

@@ -94,7 +94,7 @@ pub mod whatwg {
 /// Returns a list of references to the encodings available.
 pub fn encodings() -> &'static [EncodingRef] {
     // TODO should be generated automatically
-    const ENCODINGS: &'static [EncodingRef] = &[
+    const ENCODINGS: &[EncodingRef] = &[
         ERROR,
         ASCII,
         CP437,

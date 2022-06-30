@@ -57,6 +57,7 @@ impl Encoding for GB18030Encoding {
 pub struct GB18030Encoder;
 
 impl GB18030Encoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(GB18030Encoder)
     }
@@ -121,6 +122,7 @@ impl Encoding for GBKEncoding {
 pub struct GBKEncoder;
 
 impl GBKEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(GBKEncoder)
     }
@@ -170,7 +172,7 @@ impl GBEncoder {
                     }),
                 );
             } else if gbk_flag && ch == '\u{20AC}' {
-                output.write_byte('\u{80}' as u8)
+                output.write_byte(b'\x80')
             } else {
                 let ptr = index::gb18030::backward(ch as u32);
                 if ptr == 0xffff {
@@ -212,6 +214,7 @@ struct GB18030Decoder {
 }
 
 impl GB18030Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(GB18030Decoder {
             st: Default::default(),
@@ -493,7 +496,7 @@ mod gb18030_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(GB18030Encoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(GB18030Encoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]
@@ -550,7 +553,7 @@ mod gbk_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(GBKEncoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(GBKEncoding.encode(s, EncoderTrap::Strict)))
     }
 }
 
@@ -588,6 +591,7 @@ pub struct HZEncoder {
 }
 
 impl HZEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(HZEncoder { escaped: false })
     }
@@ -621,7 +625,7 @@ impl RawEncoder for HZEncoder {
                 ensure_unescaped!();
                 output.write_byte(ch as u8);
                 if ch == '~' {
-                    output.write_byte('~' as u8);
+                    output.write_byte(b'~');
                 }
             } else {
                 let ptr = index::gb18030::backward(ch as u32);
@@ -672,6 +676,7 @@ struct HZDecoder {
 }
 
 impl HZDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(HZDecoder {
             st: Default::default(),
@@ -901,7 +906,7 @@ mod hz_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::SIMPLIFIED_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(HZEncoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(HZEncoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]

@@ -11,6 +11,7 @@ use std::marker::PhantomData;
 use std::{char, mem, str};
 
 /// Unchecked conversion to `char`.
+#[allow(clippy::transmute_int_to_char)]
 pub fn as_char(ch: u32) -> char {
     debug_assert!(char::from_u32(ch).is_some());
     unsafe { mem::transmute(ch) }
@@ -78,11 +79,11 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
         data: &'a Data,
     ) -> StatefulDecoderHelper<'a, St, Data> {
         StatefulDecoderHelper {
-            buf: buf,
+            buf,
             pos: 0,
-            output: output,
+            output,
             err: None,
-            data: data,
+            data,
             _marker: PhantomData,
         }
     }
@@ -110,6 +111,7 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     /// There is intentionally no check for `c`, so the caller should ensure that it's valid.
     /// If this is the last expr in the rules, also resets back to the initial state.
     #[inline(always)]
+    #[allow(clippy::transmute_int_to_char)]
     pub fn emit(&mut self, c: u32) -> St {
         self.output.write_char(unsafe { mem::transmute(c) });
         Default::default()
@@ -143,7 +145,7 @@ impl<'a, St: Default, Data> StatefulDecoderHelper<'a, St, Data> {
     pub fn backup_and_err(&mut self, backup: usize, msg: &'static str) -> St {
         let upto = self.pos as isize - backup as isize;
         self.err = Some(types::CodecError {
-            upto: upto,
+            upto,
             cause: msg.into(),
         });
         Default::default()
@@ -172,10 +174,11 @@ macro_rules! stateful_decoder {
         })*
     ) => (
         #[allow(non_snake_case)]
+        #[allow(clippy::upper_case_acronyms)]
         mod $stmod {
             pub use self::State::*;
 
-            #[derive(PartialEq, Clone, Copy)]
+            #[derive(PartialEq, Eq, Clone, Copy)]
             pub enum State {
                 $inist,
                 $(

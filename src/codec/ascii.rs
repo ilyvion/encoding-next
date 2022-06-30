@@ -6,7 +6,6 @@
 
 use crate::types::*;
 use std::convert::Into;
-use std::mem;
 
 /**
  * ASCII, also known as ISO/IEC 646:US.
@@ -34,6 +33,7 @@ impl Encoding for ASCIIEncoding {
 pub struct ASCIIEncoder;
 
 impl ASCIIEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(ASCIIEncoder)
     }
@@ -83,6 +83,7 @@ impl RawEncoder for ASCIIEncoder {
 pub struct ASCIIDecoder;
 
 impl ASCIIDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(ASCIIDecoder)
     }
@@ -104,7 +105,7 @@ impl RawDecoder for ASCIIDecoder {
         output.writer_hint(input.len());
 
         fn write_ascii_bytes(output: &mut dyn StringWriter, buf: &[u8]) {
-            output.write_str(unsafe { mem::transmute(buf) });
+            output.write_str(unsafe { std::str::from_utf8_unchecked(buf) })
         }
 
         match input.iter().position(|&ch| ch >= 0x80) {

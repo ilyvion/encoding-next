@@ -49,6 +49,7 @@ impl Encoding for EUCJPEncoding {
 pub struct EUCJPEncoder;
 
 impl EUCJPEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(EUCJPEncoder)
     }
@@ -118,6 +119,7 @@ struct EUCJP0212Decoder {
 }
 
 impl EUCJP0212Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(EUCJP0212Decoder {
             st: Default::default(),
@@ -478,7 +480,7 @@ mod eucjp_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(EUCJPEncoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(EUCJPEncoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]
@@ -530,6 +532,7 @@ impl Encoding for Windows31JEncoding {
 pub struct Windows31JEncoder;
 
 impl Windows31JEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(Windows31JEncoder)
     }
@@ -601,6 +604,7 @@ struct Windows31JDecoder {
 }
 
 impl Windows31JDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(Windows31JDecoder {
             st: Default::default(),
@@ -853,7 +857,7 @@ mod windows31j_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(Windows31JEncoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(Windows31JEncoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]
@@ -898,6 +902,7 @@ impl Encoding for ISO2022JPEncoding {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Clone, Copy)]
 enum ISO2022JPState {
     ASCII,    // U+0000..007F, U+00A5, U+203E
@@ -912,6 +917,7 @@ pub struct ISO2022JPEncoder {
 }
 
 impl ISO2022JPEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(ISO2022JPEncoder { st: ASCII })
     }
@@ -999,6 +1005,7 @@ struct ISO2022JPDecoder {
 }
 
 impl ISO2022JPDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(ISO2022JPDecoder {
             st: Default::default(),
@@ -1189,12 +1196,12 @@ mod iso2022jp_tests {
         // - C: U+FF88 HALFWIDTH KATAKANA LETTER NE (requires Katakana state)
         // - D is omitted as the encoder does not support JIS X 0212.
         // a (3,2) De Bruijn near-sequence "ABCACBA" is used to test all possible cases.
-        const AD: &'static str = "\x20";
-        const BD: &'static str = "\u{30cd}";
-        const CD: &'static str = "\u{ff88}";
-        const AE: &'static [u8] = &[0x1b, 0x28, 0x42, 0x20];
-        const BE: &'static [u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
-        const CE: &'static [u8] = &[0x1b, 0x28, 0x49, 0x48];
+        const AD: &str = "\x20";
+        const BD: &str = "\u{30cd}";
+        const CD: &str = "\u{ff88}";
+        const AE: &[u8] = &[0x1b, 0x28, 0x42, 0x20];
+        const BE: &[u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
+        const CE: &[u8] = &[0x1b, 0x28, 0x49, 0x48];
         let mut e = ISO2022JPEncoding.raw_encoder();
         let decoded: String = ["\x20", BD, CD, AD, CD, BD, AD].concat();
         let encoded: Vec<_> = [&[0x20][..], BE, CE, AE, CE, BE, AE].concat();
@@ -1271,14 +1278,14 @@ mod iso2022jp_tests {
         // - C: U+FF88 HALFWIDTH KATAKANA LETTER NE (requires Katakana state)
         // - D: U+793B CJK UNIFIED IDEOGRAPH-793B (requires JIS X 0212 Lead state)
         // a (4,2) De Bruijn sequence "AABBCCACBADDBDCDA" is used to test all possible cases.
-        const AD: &'static str = "\x20";
-        const BD: &'static str = "\u{30cd}";
-        const CD: &'static str = "\u{ff88}";
-        const DD: &'static str = "\u{793b}";
-        const AE: &'static [u8] = &[0x1b, 0x28, 0x42, 0x20];
-        const BE: &'static [u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
-        const CE: &'static [u8] = &[0x1b, 0x28, 0x49, 0x48];
-        const DE: &'static [u8] = &[0x1b, 0x24, 0x28, 0x44, 0x50, 0x4b];
+        const AD: &str = "\x20";
+        const BD: &str = "\u{30cd}";
+        const CD: &str = "\u{ff88}";
+        const DD: &str = "\u{793b}";
+        const AE: &[u8] = &[0x1b, 0x28, 0x42, 0x20];
+        const BE: &[u8] = &[0x1b, 0x24, 0x42, 0x25, 0x4d];
+        const CE: &[u8] = &[0x1b, 0x28, 0x49, 0x48];
+        const DE: &[u8] = &[0x1b, 0x24, 0x28, 0x44, 0x50, 0x4b];
         let mut d = ISO2022JPEncoding.raw_decoder();
         let dec: String = [
             "\x20", AD, BD, BD, CD, CD, AD, CD, BD, AD, DD, DD, BD, DD, CD, DD, AD,
@@ -1539,7 +1546,7 @@ mod iso2022jp_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::JAPANESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(ISO2022JPEncoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(ISO2022JPEncoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]

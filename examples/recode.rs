@@ -89,7 +89,6 @@ fn main() {
     let mut ret = Vec::new();
     input
         .read_to_end(&mut ret)
-        .ok()
         .expect("cannot read from the input");
     let decoded = match inenc.decode(&ret, intrap) {
         Ok(s) => s,

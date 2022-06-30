@@ -47,6 +47,7 @@ impl Encoding for BigFive2003Encoding {
 pub struct BigFive2003Encoder;
 
 impl BigFive2003Encoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(BigFive2003Encoder)
     }
@@ -103,6 +104,7 @@ struct BigFive2003HKSCS2008Decoder {
 }
 
 impl BigFive2003HKSCS2008Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(BigFive2003HKSCS2008Decoder {
             st: Default::default(),
@@ -306,7 +308,7 @@ mod bigfive2003_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::TRADITIONAL_CHINESE_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(BigFive2003Encoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(BigFive2003Encoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]

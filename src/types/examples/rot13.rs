@@ -34,6 +34,7 @@ impl Encoding for ROT13Encoding {
 pub struct ROT13Encoder;
 
 impl ROT13Encoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(ROT13Encoder)
     }
@@ -68,6 +69,7 @@ impl RawEncoder for ROT13Encoder {
 pub struct ROT13Decoder;
 
 impl ROT13Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(ROT13Decoder)
     }
@@ -97,7 +99,7 @@ impl RawDecoder for ROT13Decoder {
                         // therefore we can’t quite do partial parsing yet
                         cause: "input is not valid utf-8".into(),
                     }),
-                )
+                );
             }
         };
         for ch in string.chars() {
@@ -129,7 +131,6 @@ fn main() {
     let mut ret = Vec::new();
     io::stdin()
         .read_to_end(&mut ret)
-        .ok()
         .expect("cannot read from the input");
     match ROT13Encoding.decode(&ret, DecoderTrap::Strict) {
         Ok(s) => println!("{}", s),

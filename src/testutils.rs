@@ -259,7 +259,7 @@ macro_rules! assert_finish_err {
 //
 // the first paragraphs of the article "English Language" from English Wikipedia.
 // https://en.wikipedia.org/w/index.php?title=English_language&oldid=608500518
-pub static ASCII_TEXT: &'static str =
+pub static ASCII_TEXT: &str =
     "English is a West Germanic language that was first spoken in early medieval England \
      and is now a global lingua franca. It is spoken as a first language by \
      the majority populations of several sovereign states, including the United Kingdom, \
@@ -273,7 +273,7 @@ pub static ASCII_TEXT: &'static str =
 //
 // the first paragraphs of the article "Korean Language" from Korean Wikipedia.
 // https://ko.wikipedia.org/w/index.php?title=%ED%95%9C%EA%B5%AD%EC%96%B4&oldid=12331875
-pub static KOREAN_TEXT: &'static str =
+pub static KOREAN_TEXT: &str =
     "한국어(韓國語)는 주로 한반도(韓半島)와 한민족(韓民族) 거주 지역에서 쓰이는 언어로, \
      대한민국에서는 한국어, 한국말이라고 부르고, 조선민주주의인민공화국과 중국, 일본에서는 \
      조선어(朝鮮語), 조선말이라고 불린다. 우즈베키스탄, 러시아 등 구 소련의 고려인들 사이에서는 \
@@ -287,7 +287,7 @@ pub static KOREAN_TEXT: &'static str =
 //
 // the first paragraphs of the article "Japanese Language" from Japanese Wikipedia.
 // https://ja.wikipedia.org/w/index.php?title=%E6%97%A5%E6%9C%AC%E8%AA%9E&oldid=51443986
-pub static JAPANESE_TEXT: &'static str =
+pub static JAPANESE_TEXT: &str =
     "日本語（にほんご、にっぽんご）とは、主に日本国内や日本人同士の間で使われている言語である。\
      日本は法令によって「公用語」を規定していないが、法令その他の公用文は日本語で記述され、\
      各種法令（裁判所法第74条、会社計算規則第57条、特許法施行規則第2条など）において\
@@ -300,7 +300,7 @@ pub static JAPANESE_TEXT: &'static str =
 //
 // the first paragraphs of the article "Chinese Language" from Chinese Wikipedia.
 // https://zh.wikipedia.org/w/index.php?title=%E6%B1%89%E8%AF%AD&variant=zh-cn&oldid=31224104
-pub static SIMPLIFIED_CHINESE_TEXT: &'static str =
+pub static SIMPLIFIED_CHINESE_TEXT: &str =
     "汉语，又称中文、华语（东南亚）、国语（中华民国国语）、中国语（日本、韩国等），\
      其他名称有汉文（通常指文言文）、华文、唐文、唐话、中国话等，是属汉藏语系的分析语，具有声调。\
      汉语的文字系统——汉字是一种意音文字，表意的同时也具一定的表音功能。\
@@ -316,7 +316,7 @@ pub static SIMPLIFIED_CHINESE_TEXT: &'static str =
 //
 // the first paragraphs of the article "Chinese Language" from Chinese Wikipedia.
 // https://zh.wikipedia.org/w/index.php?title=%E6%B1%89%E8%AF%AD&variant=zh-tw&oldid=31224104
-pub static TRADITIONAL_CHINESE_TEXT: &'static str =
+pub static TRADITIONAL_CHINESE_TEXT: &str =
     "漢語，又稱中文、華語（東南亞）、國語（中華民國國語）、中國語（日本、韓國等），\
      其他名稱有漢文（通常指文言文）、華文、唐文、唐話、中國話等，是屬漢藏語系的分析語，具有聲調。\
      漢語的文字系統——漢字是一種意音文字，表意的同時也具一定的表音功能。\
@@ -332,7 +332,7 @@ pub static TRADITIONAL_CHINESE_TEXT: &'static str =
 //
 // Markus Kuhn's UTF-8 decoder capability and stress test.
 // http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
-pub static INVALID_UTF8_TEXT: &'static [u8] = include_bytes!("examples/UTF-8-test.txt");
+pub static INVALID_UTF8_TEXT: &[u8] = include_bytes!("examples/UTF-8-test.txt");
 
 /// Returns a longer text used for external data benchmarks.
 /// This can be overriden with an environment variable `EXTERNAL_BENCH_DATA`,
@@ -345,7 +345,7 @@ pub fn get_external_bench_data() -> Vec<u8> {
 
     // An HTML file derived from the Outer Space Treaty of 1967, in six available languages.
     // http://www.unoosa.org/oosa/SpaceLaw/outerspt.html
-    static LONGER_TEXT: &'static [u8] = include_bytes!("examples/outer-space-treaty.html");
+    static LONGER_TEXT: &[u8] = include_bytes!("examples/outer-space-treaty.html");
 
     match env::var("EXTERNAL_BENCH_DATA") {
         Ok(path) => {

@@ -98,6 +98,7 @@ impl UTF16Encoder {
 pub struct UTF16LEEncoder;
 
 impl UTF16LEEncoder {
+    #[allow(clippy::new_ret_no_self)]
     fn new() -> Box<dyn RawEncoder> {
         Box::new(UTF16LEEncoder)
     }
@@ -131,6 +132,7 @@ impl RawEncoder for UTF16LEEncoder {
 pub struct UTF16BEEncoder;
 
 impl UTF16BEEncoder {
+    #[allow(clippy::new_ret_no_self)]
     fn new() -> Box<dyn RawEncoder> {
         Box::new(UTF16BEEncoder)
     }
@@ -350,6 +352,7 @@ struct UTF16LEDecoder {
 }
 
 impl UTF16LEDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(UTF16LEDecoder {
             inner: UTF16Decoder::new(),
@@ -382,6 +385,7 @@ struct UTF16BEDecoder {
 }
 
 impl UTF16BEDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(UTF16BEDecoder {
             inner: UTF16Decoder::new(),

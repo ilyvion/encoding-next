@@ -26,7 +26,7 @@
 
 use crate::types::*;
 use std::convert::Into;
-use std::{mem, str};
+use std::str;
 
 /**
  * UTF-8 (UCS Transformation Format, 8-bit).
@@ -66,6 +66,7 @@ impl Encoding for UTF8Encoding {
 pub struct UTF8Encoder;
 
 impl UTF8Encoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(UTF8Encoder)
     }
@@ -104,6 +105,7 @@ pub struct UTF8Decoder {
 }
 
 impl UTF8Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(UTF8Decoder {
             queuelen: 0,
@@ -176,7 +178,7 @@ impl RawDecoder for UTF8Decoder {
         output.writer_hint(input.len());
 
         fn write_bytes(output: &mut dyn StringWriter, bytes: &[u8]) {
-            output.write_str(unsafe { mem::transmute(bytes) });
+            output.write_str(unsafe { std::str::from_utf8_unchecked(bytes) });
         }
 
         let mut state = self.state;
@@ -257,11 +259,11 @@ impl RawDecoder for UTF8Decoder {
 /// Almost equivalent to `std::str::from_utf8`.
 /// This function is provided for the fair benchmark against the stdlib's UTF-8 conversion
 /// functions, as rust-encoding always allocates a new string.
-pub fn from_utf8<'a>(input: &'a [u8]) -> Option<&'a str> {
+pub fn from_utf8(input: &[u8]) -> Option<&str> {
     let mut iter = input.iter();
     let mut state;
 
-    macro_rules! return_as_whole(() => (return Some(unsafe {mem::transmute(input)})));
+    macro_rules! return_as_whole(() => (return Some(unsafe {std::str::from_utf8_unchecked(input)})));
 
     // optimization: if we are in the initial state, quickly skip to the first non-MSB-set byte.
     loop {

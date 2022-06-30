@@ -106,12 +106,12 @@ mod tests {
 
     #[test]
     fn test_reencoding_trap_with_ascii_compatible_encoding() {
-        static COMPAT: &'static MyEncoding = &MyEncoding {
+        static COMPAT: &MyEncoding = &MyEncoding {
             flag: true,
             prohibit: '\u{80}',
             prepend: "",
         };
-        static INCOMPAT: &'static MyEncoding = &MyEncoding {
+        static INCOMPAT: &MyEncoding = &MyEncoding {
             flag: false,
             prohibit: '\u{80}',
             prepend: "",
@@ -129,12 +129,12 @@ mod tests {
 
     #[test]
     fn test_reencoding_trap_with_ascii_incompatible_encoding() {
-        static COMPAT: &'static MyEncoding = &MyEncoding {
+        static COMPAT: &MyEncoding = &MyEncoding {
             flag: true,
             prohibit: '\u{80}',
             prepend: "*",
         };
-        static INCOMPAT: &'static MyEncoding = &MyEncoding {
+        static INCOMPAT: &MyEncoding = &MyEncoding {
             flag: false,
             prohibit: '\u{80}',
             prepend: "*",
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn test_encoding_sendable() {
-        static COMPAT: &'static MyEncoding = &MyEncoding {
+        static COMPAT: &MyEncoding = &MyEncoding {
             flag: true,
             prohibit: '\u{80}',
             prepend: "*",
@@ -166,7 +166,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_reencoding_trap_can_fail() {
-        static FAIL: &'static MyEncoding = &MyEncoding {
+        static FAIL: &MyEncoding = &MyEncoding {
             flag: false,
             prohibit: '&',
             prepend: "",

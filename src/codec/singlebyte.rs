@@ -39,10 +39,9 @@ pub struct SingleByteEncoder {
 }
 
 impl SingleByteEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(index_backward: fn(u32) -> u8) -> Box<dyn RawEncoder> {
-        Box::new(SingleByteEncoder {
-            index_backward: index_backward,
-        })
+        Box::new(SingleByteEncoder { index_backward })
     }
 }
 
@@ -95,10 +94,9 @@ pub struct SingleByteDecoder {
 }
 
 impl SingleByteDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(index_forward: fn(u8) -> u16) -> Box<dyn RawDecoder> {
-        Box::new(SingleByteDecoder {
-            index_forward: index_forward,
-        })
+        Box::new(SingleByteDecoder { index_forward })
     }
 }
 

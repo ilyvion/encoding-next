@@ -44,6 +44,7 @@ impl Encoding for Windows949Encoding {
 pub struct Windows949Encoder;
 
 impl Windows949Encoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(Windows949Encoder)
     }
@@ -98,6 +99,7 @@ struct Windows949Decoder {
 }
 
 impl Windows949Decoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(Windows949Decoder {
             st: Default::default(),
@@ -303,7 +305,7 @@ mod windows949_tests {
     fn bench_encode_short_text(bencher: &mut test::Bencher) {
         let s = testutils::KOREAN_TEXT;
         bencher.bytes = s.len() as u64;
-        bencher.iter(|| test::black_box(Windows949Encoding.encode(&s, EncoderTrap::Strict)))
+        bencher.iter(|| test::black_box(Windows949Encoding.encode(s, EncoderTrap::Strict)))
     }
 
     #[bench]

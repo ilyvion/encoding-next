@@ -154,6 +154,7 @@ impl StringWriter for String {
 /// This is a lower level interface, and normally `Encoding::encode` should be used instead.
 pub trait RawEncoder: Send + 'static {
     /// Creates a fresh `RawEncoder` instance which parameters are same as `self`.
+    #[allow(clippy::wrong_self_convention)]
     fn from_self(&self) -> Box<dyn RawEncoder>;
 
     /// Returns true if this encoding is compatible to ASCII,
@@ -181,6 +182,7 @@ pub trait RawEncoder: Send + 'static {
 /// This is a lower level interface, and normally `Encoding::decode` should be used instead.
 pub trait RawDecoder: Send + 'static {
     /// Creates a fresh `RawDecoder` instance which parameters are same as `self`.
+    #[allow(clippy::wrong_self_convention)]
     fn from_self(&self) -> Box<dyn RawDecoder>;
 
     /// Returns true if this encoding is compatible to ASCII,
