@@ -235,6 +235,18 @@ extern crate encoding_types;
 #[cfg(test)]
 extern crate test;
 
+#[cfg(doctest)]
+mod test_readme {
+    macro_rules! external_doc_test {
+        ($x:expr) => {
+            #[doc = $x]
+            extern "C" {}
+        };
+    }
+
+    external_doc_test!(include_str!("../README.md"));
+}
+
 pub use self::types::{
     ByteWriter, CodecError, DecoderTrap, DecoderTrapFunc, EncoderTrap, EncoderTrapFunc, Encoding,
     EncodingRef, RawDecoder, RawEncoder, StringWriter,

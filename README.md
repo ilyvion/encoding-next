@@ -122,7 +122,7 @@ use encoding::types::RawEncoder;
 use encoding::all::ASCII;
 
 // hexadecimal numeric character reference replacement
-fn hex_ncr_escape(_encoder: &mut RawEncoder, input: &str, output: &mut ByteWriter) -> bool {
+fn hex_ncr_escape(_encoder: &mut dyn RawEncoder, input: &str, output: &mut dyn ByteWriter) -> bool {
     let escapes: Vec<String> =
         input.chars().map(|ch| format!("&#x{:x};", ch as isize)).collect();
     let escapes = escapes.concat();
