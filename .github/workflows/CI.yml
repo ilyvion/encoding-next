@@ -3,15 +3,119 @@ name: Rust
 on:
     push:
         branches: [master]
+        paths-ignore:
+            - "README.md"
+            - ".gitignore"
+            - ".git-blame-ignore-revs"
+            - "AUTHORS.txt"
     pull_request:
         branches: [master]
+        paths-ignore:
+            - "README.md"
+            - ".gitignore"
+            - ".git-blame-ignore-revs"
+            - "AUTHORS.txt"
 
 env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    build-rust:
+    check:
+        name: Check
         runs-on: ubuntu-latest
+        env:
+            RUSTFLAGS: -Dwarnings
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: true
+
+            - name: Install Rust (stable)
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+
+            - name: Cargo check
+              uses: actions-rs/cargo@v1
+              with:
+                  command: check
+                  args: --all-features
+
+    test:
+        name: Test
+        runs-on: ${{ matrix.config.os }}
+        needs: check
+        strategy:
+            fail-fast: false
+            matrix:
+                config:
+                    #- { os: "ubuntu-latest", toolchain: "stable" }
+                    #- { os: "ubuntu-latest", toolchain: "beta" }
+                    - { os: "ubuntu-latest", toolchain: "nightly" }
+                    - { os: "windows-2016", toolchain: "nightly" }
+                    - { os: "macOS-latest", toolchain: "nightly" }
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: true
+
+            - name: Install ${{ matrix.config.toolchain }} toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: ${{ matrix.config.toolchain }}
+                  override: true
+                  components: rustfmt
+
+            - name: Cargo build
+              uses: actions-rs/cargo@v1
+              #continue-on-error: ${{ matrix.config.toolchain == 'nightly' }}
+              with:
+                  command: build
+                  args: --all-features
+
+            - name: Cargo test
+              uses: actions-rs/cargo@v1
+              #continue-on-error: ${{ matrix.config.toolchain == 'nightly' }}
+              with:
+                  command: test
+                  args: --all-features -- --nocapture
+
+    style:
+        name: Check Style
+        runs-on: ubuntu-latest
+        needs: check
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: true
+
+            - name: Install stable toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+                  components: clippy, rustfmt
+
+            - name: Run cargo fmt
+              uses: actions-rs/cargo@v1
+              with:
+                  command: fmt
+                  args: --all -- --check
+
+            - name: Run cargo clippy
+              uses: actions-rs/clippy-check@v1
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  args: --all-features
+
+    coverage:
+        name: Report coverage
+        runs-on: ubuntu-latest
+        needs: test
 
         steps:
             - name: Checkout repository
@@ -27,9 +131,6 @@ jobs:
             - name: Install llvm tools
               run: rustup component add llvm-tools-preview
               shell: bash
-
-            - name: Rust Cache
-              uses: Swatinem/rust-cache@v1.3.0
 
             - name: Install grcov
               run: curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
