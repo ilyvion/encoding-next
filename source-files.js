@@ -1,3 +1,10 @@
 var sourcesIndex = {};
 sourcesIndex["encoding"] = {"name":"","dirs":[{"name":"codec","files":["ascii.rs","error.rs","japanese.rs","korean.rs","simpchinese.rs","singlebyte.rs","tradchinese.rs","utf_16.rs","utf_8.rs","whatwg.rs"]}],"files":["all.rs","label.rs","lib.rs","types.rs","util.rs"]};
+sourcesIndex["encoding_index_japanese"] = {"name":"","files":["jis0208.rs","jis0212.rs","lib.rs"]};
+sourcesIndex["encoding_index_korean"] = {"name":"","files":["euc_kr.rs","lib.rs"]};
+sourcesIndex["encoding_index_simpchinese"] = {"name":"","files":["gb18030.rs","gb18030_ranges.rs","lib.rs"]};
+sourcesIndex["encoding_index_singlebyte"] = {"name":"","files":["armscii_8.rs","cp437.rs","ibm866.rs","iso_8859_10.rs","iso_8859_13.rs","iso_8859_14.rs","iso_8859_15.rs","iso_8859_16.rs","iso_8859_2.rs","iso_8859_3.rs","iso_8859_4.rs","iso_8859_5.rs","iso_8859_6.rs","iso_8859_7.rs","iso_8859_8.rs","koi8_r.rs","koi8_u.rs","lib.rs","macintosh.rs","windows_1250.rs","windows_1251.rs","windows_1252.rs","windows_1253.rs","windows_1254.rs","windows_1255.rs","windows_1256.rs","windows_1257.rs","windows_1258.rs","windows_874.rs","x_mac_cyrillic.rs"]};
+sourcesIndex["encoding_index_tests"] = {"name":"","files":["index_tests.rs"]};
+sourcesIndex["encoding_index_tradchinese"] = {"name":"","files":["big5.rs","lib.rs"]};
+sourcesIndex["encoding_types"] = {"name":"","files":["lib.rs"]};
 createSourceSidebar();

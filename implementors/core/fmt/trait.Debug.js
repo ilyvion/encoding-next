@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["encoding_types"] = [{"text":"impl&lt;'a&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a> for &amp;'a dyn <a class=\"trait\" href=\"encoding_types/trait.Encoding.html\" title=\"trait encoding_types::Encoding\">Encoding</a>","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
