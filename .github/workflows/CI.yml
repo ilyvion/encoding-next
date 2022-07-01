@@ -53,9 +53,6 @@ jobs:
                 os: [ubuntu-latest, windows-latest, macos-latest]
                 #toolchain: [stable, beta, nightly]
                 toolchain: [nightly]
-                cargo_flags:
-                    - "--no-default-features"
-                    - "--all-features"
         steps:
             - name: Checkout source code
               uses: actions/checkout@v2
@@ -70,19 +67,18 @@ jobs:
                   override: true
                   components: rustfmt
 
-            - name: Cargo build
-              uses: actions-rs/cargo@v1
-              #continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+            - name: Install cargo-hack
+              uses: taiki-e/install-action@v1
               with:
-                  command: build
-                  args: ${{ matrix.cargo_flags }} --workspace
+                  tool: cargo-hack
 
             - name: Cargo test
               uses: actions-rs/cargo@v1
-              #continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+              env:
+                  RUST_BACKTRACE: 1
               with:
-                  command: test
-                  args: ${{ matrix.cargo_flags }} --workspace -- --nocapture
+                  command: hack
+                  args: --feature-powerset --keep-going test --no-fail-fast --workspace
 
     miri:
         name: Miri
