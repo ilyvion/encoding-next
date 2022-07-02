@@ -4,7 +4,7 @@
 // https://creativecommons.org/publicdomain/zero/1.0/
 
 //! Traditional Chinese index tables for
-//! [encoding-next](https://github.com/lifthrasiir/encoding-next).
+//! [encoding-next](https://github.com/alexschrod/encoding-next).
 
 #![cfg_attr(test, feature(test))]
 

@@ -4,7 +4,7 @@
 // https://creativecommons.org/publicdomain/zero/1.0/
 
 //! Single-byte index tables for
-//! [encoding-nextencoding](https://github.com/lifthrasiir/encoding-next).
+//! [encoding-nextencoding](https://github.com/alexschrod/encoding-next).
 
 #![cfg_attr(test, feature(test))]
 
