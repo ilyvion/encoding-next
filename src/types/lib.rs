@@ -54,6 +54,7 @@
 
 use std::borrow::Cow;
 use std::fmt;
+use std::fmt::Write;
 
 /// Error information from either encoder or decoder.
 pub struct CodecError {
@@ -456,7 +457,7 @@ impl EncoderTrap {
             EncoderTrap::NcrEscape => {
                 let mut escapes = String::new();
                 for ch in input.chars() {
-                    escapes.push_str(&format!("&#{};", ch as isize));
+                    write!(&mut escapes, "&#{};", ch as isize).unwrap();
                 }
                 reencode(encoder, &escapes, output, "NcrEscape")
             }

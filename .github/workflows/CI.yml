@@ -73,12 +73,44 @@ jobs:
                   tool: cargo-hack
 
             - name: Cargo test
-              uses: actions-rs/cargo@v1
+              id: tests
+              uses: alexschrod/action-rs-cargo@feat/stdout-stderr
               env:
                   RUST_BACKTRACE: 1
               with:
                   command: hack
-                  args: --feature-powerset --keep-going test --no-fail-fast --workspace
+                  args: --feature-powerset --keep-going test --message-format=json --no-fail-fast --workspace
+
+            - name: Write tests to file
+              if: always()
+              uses: DamianReeves/write-file-action@master
+              with:
+                  path: tests.json
+                  contents: ${{ steps.tests.outputs.stdout }}
+
+            - name: Cargo metadata
+              id: metadata
+              if: always()
+              uses: alexschrod/action-rs-cargo@feat/stdout-stderr
+              with:
+                  command: metadata
+                  args: --format-version 1
+
+            - name: Write metadata to file
+              if: always()
+              uses: DamianReeves/write-file-action@master
+              with:
+                  path: metadata.json
+                  contents: ${{ steps.metadata.outputs.stdout }}
+
+            - name: Create test annotations
+              if: always()
+              uses: alexschrod/cargo-test-annotations@master
+              with:
+                  metadata: "metadata.json"
+                  tests: "tests.json"
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  name: cargo-test-annotations (${{ matrix.os }}, ${{ matrix.toolchain }})
 
     miri:
         name: Miri
