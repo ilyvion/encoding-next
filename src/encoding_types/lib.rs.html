@@ -482,6 +482,7 @@
 <span id="476">476</span>
 <span id="477">477</span>
 <span id="478">478</span>
+<span id="479">479</span>
 </pre><pre class="rust"><code><span class="comment">// This is a part of encoding-next.</span>
 <span class="comment">// Copyright (c) 2013-2015, Kang Seonghoon.</span>
 <span class="comment">// See README.md and LICENSE.txt for details.</span>
@@ -538,6 +539,7 @@
 
 <span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::fmt::Write</span>;
 
 <span class="doccomment">/// Error information from either encoder or decoder.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CodecError</span> {
@@ -940,7 +942,7 @@
             <span class="ident">EncoderTrap::NcrEscape</span> =&gt; {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">escapes</span> <span class="op">=</span> <span class="ident">String::new</span>();
                 <span class="kw">for</span> <span class="ident">ch</span> <span class="kw">in</span> <span class="ident">input</span>.<span class="ident">chars</span>() {
-                    <span class="ident">escapes</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;&amp;#{};&quot;</span>, <span class="ident">ch</span> <span class="kw">as</span> <span class="ident">isize</span>));
+                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut</span> <span class="ident">escapes</span>, <span class="string">&quot;&amp;#{};&quot;</span>, <span class="ident">ch</span> <span class="kw">as</span> <span class="ident">isize</span>).<span class="ident">unwrap</span>();
                 }
                 <span class="ident">reencode</span>(<span class="ident">encoder</span>, <span class="kw-2">&amp;</span><span class="ident">escapes</span>, <span class="ident">output</span>, <span class="string">&quot;NcrEscape&quot;</span>)
             }
@@ -961,5 +963,5 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="encoding_types" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0-nightly (46b8c23f3 2022-07-01)" ></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="encoding_types" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0-nightly (f2d93935f 2022-07-02)" ></div>
 </body></html>
