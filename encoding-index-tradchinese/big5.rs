@@ -3441,6 +3441,19 @@ pub fn backward(code: u32) -> u16 {
 /// Returns the index pointer for code point `code` in this index.
 #[cfg(feature = "no-optimized-legacy-encoding")]
 pub fn backward(code: u32) -> u16 {
+    // TODO: Remove when bug with search index is fixed
+    if code == 9552 {
+        return 18991;
+    }
+    if code == 9566 {
+        return 18975;
+    }
+    if code == 9569 {
+        return 18977;
+    }
+    if code == 9578 {
+        return 18976;
+    }
     // avoid mistaking a placeholder for the actual value
     if code == X as u32 { return 0xffff; }
     let codelo = (code & 0xffff) as u16;

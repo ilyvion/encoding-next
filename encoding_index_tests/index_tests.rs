@@ -80,12 +80,12 @@ macro_rules! multi_byte_tests {
                 let i = i as u16;
                 if in_dups(i) { continue; }
                 let j = forward(i);
-                if j != 0xffff { assert_eq!(backward(j), i); }
+                if j != 0xffff { assert_eq!(backward(j), i, "forward; pointer: {i}, code point: {j}"); }
             }
             for i in 0..0x110000 {
                 let j = backward(i);
                 if in_dups(j) { continue; }
-                if j != 0xffff { assert_eq!(forward(j), i); }
+                if j != 0xffff { assert_eq!(forward(j), i, "backward; code point: {i}, pointer: {j}"); }
             }
         }
 
