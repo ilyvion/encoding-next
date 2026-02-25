@@ -1,3 +1,6 @@
+> [!WARNING]  
+> No further updates will be made to this.
+
 # Encoding
 
 [![Crates.io](https://img.shields.io/crates/v/encoding-next)](https://crates.io/crates/encoding-next)
